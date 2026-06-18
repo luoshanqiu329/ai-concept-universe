@@ -5,7 +5,7 @@
   "nodeVersion": "20.18.0",
   "headers": [
     {
-      "source": "/data/(.*)",
+      "source": "/data/*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -14,7 +14,7 @@
       ]
     },
     {
-      "source": "/(.*)",
+      "source": "/*",
       "headers": [
         {
           "key": "Cache-Control",
