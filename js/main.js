@@ -57,6 +57,8 @@
     cardLinks: document.getElementById("card-links"),
   };
 
+  const dynamicDom = {};
+
   const state = {
     payload: null,
     items: [],
@@ -69,6 +71,10 @@
     hoveredId: null,
     selectedId: null,
     searchHitId: null,
+    constellationId: null,
+    viewMode: "panorama",
+    isChroniclePlaying: false,
+    chronicleTimer: 0,
     scene: null,
     camera: null,
     renderer: null,
@@ -91,6 +97,7 @@
     }
 
     if (window.lucide) window.lucide.createIcons();
+    setupDynamicUi();
     initStarfield();
     setupThree();
     bindEvents();
@@ -230,10 +237,101 @@
     });
   }
 
+  function setupDynamicUi() {
+    const panel = document.querySelector(".filter-panel");
+    const typeSection = dom.typeList?.closest(".panel-section");
+    if (panel && typeSection) {
+      const viewSection = document.createElement("div");
+      viewSection.className = "panel-section view-mode-section";
+      viewSection.innerHTML = `
+        <div class="section-title">观测视角</div>
+        <div id="view-mode-list" class="view-mode-list"></div>
+      `;
+      panel.insertBefore(viewSection, typeSection);
+      dynamicDom.viewModeList = viewSection.querySelector("#view-mode-list");
+    }
+
+    const constellationHud = document.createElement("aside");
+    constellationHud.id = "constellation-hud";
+    constellationHud.className = "constellation-hud";
+    constellationHud.hidden = true;
+    constellationHud.innerHTML = `
+      <div>
+        <span class="constellation-kicker">CONSTELLATION</span>
+        <strong id="constellation-title"></strong>
+      </div>
+      <button id="exit-constellation" class="ghost-button" type="button">退出星座</button>
+    `;
+    document.querySelector(".app-shell")?.appendChild(constellationHud);
+    dynamicDom.constellationHud = constellationHud;
+    dynamicDom.constellationTitle = constellationHud.querySelector("#constellation-title");
+    dynamicDom.exitConstellation = constellationHud.querySelector("#exit-constellation");
+    dynamicDom.exitConstellation.addEventListener("click", () => clearConstellation());
+
+    const chronicleButton = document.createElement("button");
+    chronicleButton.id = "chronicle-play";
+    chronicleButton.className = "icon-button chronicle-play";
+    chronicleButton.type = "button";
+    chronicleButton.title = "播放编年史";
+    chronicleButton.setAttribute("aria-label", "播放编年史");
+    chronicleButton.innerHTML = '<i data-lucide="play" aria-hidden="true"></i>';
+    document.querySelector(".chronicle-head")?.prepend(chronicleButton);
+    dynamicDom.chroniclePlay = chronicleButton;
+    chronicleButton.addEventListener("click", toggleChroniclePlay);
+
+    const archiveSection = document.createElement("div");
+    archiveSection.id = "archive-section";
+    archiveSection.className = "archive-section";
+    archiveSection.hidden = true;
+    archiveSection.innerHTML = `
+      <div class="archive-row">
+        <span>重要性</span>
+        <strong id="archive-importance"></strong>
+      </div>
+      <div class="archive-row">
+        <span>影响链</span>
+        <strong id="archive-lineage"></strong>
+      </div>
+    `;
+    dom.cardMetrics?.before(archiveSection);
+    dynamicDom.archiveSection = archiveSection;
+    dynamicDom.archiveImportance = archiveSection.querySelector("#archive-importance");
+    dynamicDom.archiveLineage = archiveSection.querySelector("#archive-lineage");
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
   function buildControls() {
+    buildViewModeControls();
     buildTypeControls();
     buildCategoryControls();
     buildSearchOptions();
+  }
+
+  function buildViewModeControls() {
+    if (!dynamicDom.viewModeList) return;
+    const modes = [
+      ["panorama", "全景"],
+      ["chronicle", "编年史"],
+      ["hot", "热点"],
+      ["company", "公司"],
+      ["person", "人物"],
+    ];
+    dynamicDom.viewModeList.innerHTML = modes
+      .map(([mode, label]) => `<button class="view-mode ${state.viewMode === mode ? "is-active" : ""}" type="button" data-mode="${mode}">${label}</button>`)
+      .join("");
+    dynamicDom.viewModeList.querySelectorAll("[data-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.viewMode = button.dataset.mode;
+        if (state.viewMode !== "chronicle") {
+          stopChroniclePlay();
+          state.selectedYear = Number(dom.timeline.max || CURRENT_YEAR);
+          dom.timeline.value = String(state.selectedYear);
+        }
+        buildControls();
+        applyFilters();
+      });
+    });
   }
 
   function buildTypeControls() {
@@ -532,10 +630,12 @@
     });
 
     const placed = [];
+    const constellationIds = constellationRelatedIds();
     candidates
       .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
       .forEach((candidate) => {
-        const { item, label, focus, rect, x, y } = candidate;
+        const { item, label, rect, x, y } = candidate;
+        const focus = candidate.focus || constellationIds.has(item.id);
         const insideViewport = rect.right >= 0 && rect.left <= state.width && rect.bottom >= 0 && rect.top <= state.height;
         const overlaps = !focus && placed.some((placedLabel) => rectsOverlap(rect, placedLabel.rect, 6));
         const visible = insideViewport && (!overlaps || focus);
@@ -560,7 +660,9 @@
 
   function applyFilters() {
     let visibleCount = 0;
-    const focusRelated = relatedIds(state.hoveredId || state.selectedId || state.searchHitId);
+    const constellationIds = constellationRelatedIds();
+    const hoverRelated = relatedIds(state.hoveredId || state.searchHitId);
+    const focusRelated = constellationIds.size ? constellationIds : hoverRelated;
     state.items.forEach((item) => {
       const mesh = state.meshes.get(item.id);
       if (!mesh) return;
@@ -568,8 +670,9 @@
       visibleCount += visible ? 1 : 0;
       const focused = focusRelated.size ? focusRelated.has(item.id) : true;
       mesh.visible = visible;
-      mesh.material.opacity = visible ? (focused ? 0.94 : 0.16) : 0;
-      const scale = mesh.userData.baseScale * (item.id === state.hoveredId || item.id === state.searchHitId ? 1.36 : 1);
+      mesh.material.opacity = visible ? (focused ? 0.95 : constellationIds.size ? 0.055 : 0.16) : 0;
+      const scaleBoost = item.id === state.constellationId ? 1.5 : item.id === state.hoveredId || item.id === state.searchHitId ? 1.36 : 1;
+      const scale = mesh.userData.baseScale * scaleBoost;
       mesh.scale.setScalar(scale);
     });
 
@@ -590,11 +693,12 @@
       const visible = isItemVisible(link.source) && isItemVisible(link.target);
       const highlighted = focusRelated.has(link.sourceId) && focusRelated.has(link.targetId) && focusRelated.size > 0;
       line.visible = visible;
-      line.material.opacity = visible ? (highlighted ? 0.62 : focusRelated.size ? 0.025 : 0.12) : 0;
+      line.material.opacity = visible ? (highlighted ? (constellationIds.size ? 0.78 : 0.62) : focusRelated.size ? 0.018 : 0.12) : 0;
     });
 
     dom.sliceYear.textContent = String(state.selectedYear);
     dom.sliceCount.textContent = `${visibleCount} nodes`;
+    updateConstellationHud(constellationIds);
     updateChronicle();
     updateLabels();
   }
@@ -603,6 +707,24 @@
     if (item.year > state.selectedYear) return false;
     if (!state.activeTypes.has(item.kind)) return false;
     if (item.kind === "concept" && !state.activeCategories.has(item.category)) return false;
+    if (!matchesViewMode(item)) return false;
+    return true;
+  }
+
+  function matchesViewMode(item) {
+    if (state.viewMode === "panorama" || state.viewMode === "chronicle") return true;
+    if (state.viewMode === "hot") {
+      const changed = state.payload?.meta?.changedConcepts || [];
+      return Number(item.heat || 0) >= 86 || changed.some((change) => change.id === item.id) || item.kind === "achievement" && Number(item.year) >= 2022;
+    }
+    if (state.viewMode === "company") {
+      if (item.kind === "company") return true;
+      return state.links.some((link) => (link.source.kind === "company" || link.target.kind === "company") && (link.sourceId === item.id || link.targetId === item.id));
+    }
+    if (state.viewMode === "person") {
+      if (item.kind === "person") return true;
+      return state.links.some((link) => (link.source.kind === "person" || link.target.kind === "person") && (link.sourceId === item.id || link.targetId === item.id));
+    }
     return true;
   }
 
@@ -619,6 +741,39 @@
     return set;
   }
 
+  function constellationRelatedIds() {
+    if (!state.constellationId) return new Set();
+    const direct = relatedIds(state.constellationId);
+    const root = state.itemById.get(state.constellationId);
+    if (!root) return direct;
+    state.items.forEach((item) => {
+      if (item.id === root.id) return;
+      const sameConcept = (item.concepts || []).some((id) => id === root.id || (root.concepts || []).includes(id));
+      const rootConcept = root.concepts?.some((id) => id === item.id);
+      const sameCompany = (item.companies || []).some((id) => id === root.id || (root.companies || []).includes(id));
+      if (sameConcept || rootConcept || sameCompany) direct.add(item.id);
+    });
+    return direct;
+  }
+
+  function updateConstellationHud(constellationIds) {
+    if (!dynamicDom.constellationHud) return;
+    const root = state.itemById.get(state.constellationId);
+    dynamicDom.constellationHud.hidden = !root;
+    if (!root) return;
+    dynamicDom.constellationTitle.textContent = `${root.name} 星座 · ${Math.max(0, constellationIds.size - 1)} related`;
+  }
+
+  function enterConstellation(item) {
+    state.constellationId = item.id;
+    applyFilters();
+  }
+
+  function clearConstellation() {
+    state.constellationId = null;
+    applyFilters();
+  }
+
   function handlePointerMove(event) {
     const rect = state.renderer.domElement.getBoundingClientRect();
     state.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -633,7 +788,7 @@
     if (!state.hoveredId) return;
     const item = state.itemById.get(state.hoveredId);
     if (!item) return;
-    openInfoCard(item);
+    activateItem(item);
   }
 
   function setHovered(itemId) {
@@ -643,6 +798,7 @@
   }
 
   function handleTimelineChange() {
+    stopChroniclePlay();
     state.selectedYear = Number(dom.timeline.value);
     applyFilters();
   }
@@ -697,6 +853,7 @@
 
   function openInfoCard(item) {
     state.selectedId = item.id;
+    state.constellationId = item.id;
     dom.infoCard.hidden = false;
     const color = itemColor(item);
     dom.cardSwatch.style.background = color.getStyle();
@@ -705,6 +862,7 @@
     dom.cardTitle.textContent = item.name;
     dom.cardDefinition.textContent = item.definition || item.description || "";
     renderPortrait(item);
+    renderArchiveNotes(item);
     renderMetrics(item);
     renderModels(item);
     renderPeople(item);
@@ -717,6 +875,34 @@
     state.selectedId = null;
     dom.infoCard.hidden = true;
     applyFilters();
+  }
+
+  function renderArchiveNotes(item) {
+    if (!dynamicDom.archiveSection) return;
+    dynamicDom.archiveSection.hidden = false;
+    dynamicDom.archiveImportance.textContent = archiveImportance(item);
+    dynamicDom.archiveLineage.textContent = archiveLineage(item);
+  }
+
+  function archiveImportance(item) {
+    if (item.kind === "company") return item.achievements || item.definition || "推动 AI 产业路线演化。";
+    if (item.kind === "person") return item.contribution || item.role || "影响关键 AI 概念的形成。";
+    if (item.kind === "achievement") return item.impact || item.definition || "改变 AI 技术演化路径。";
+    if (item.origin) return item.origin;
+    if (Number(item.heat || 0) >= 88) return "当前高热度概念，正在影响模型、工具或应用生态。";
+    return "AI 知识图谱中的关键概念节点。";
+  }
+
+  function archiveLineage(item) {
+    const peers = state.links
+      .filter((link) => link.sourceId === item.id || link.targetId === item.id)
+      .map((link) => (link.sourceId === item.id ? link.target : link.source))
+      .sort((a, b) => b.heat - a.heat)
+      .slice(0, 4)
+      .map((peer) => peer.name);
+    if (peers.length) return peers.join(" / ");
+    const conceptNames = (item.concepts || []).map(nameForId).filter(Boolean).slice(0, 4);
+    return conceptNames.length ? conceptNames.join(" / ") : "独立档案节点";
   }
 
   function renderPortrait(item) {
@@ -902,9 +1088,78 @@
 
   function resetView() {
     state.searchHitId = null;
+    state.constellationId = null;
+    stopChroniclePlay();
     dom.search.value = "";
     animateCamera(new THREE.Vector3(0, 175, 440), new THREE.Vector3(0, 0, 0), 780);
     applyFilters();
+  }
+
+  function toggleChroniclePlay() {
+    if (state.isChroniclePlaying) {
+      stopChroniclePlay();
+    } else {
+      startChroniclePlay();
+    }
+  }
+
+  function startChroniclePlay() {
+    const years = chronicleYears();
+    if (!years.length) return;
+    state.viewMode = "chronicle";
+    state.isChroniclePlaying = true;
+    buildControls();
+    updateChroniclePlayButton();
+    const lastYear = years[years.length - 1];
+    const nextYear = state.selectedYear >= lastYear ? years[0] : years.find((year) => year > state.selectedYear) || years[0];
+    jumpToChronicleYear(nextYear);
+    window.clearInterval(state.chronicleTimer);
+    state.chronicleTimer = window.setInterval(() => {
+      const currentIndex = years.findIndex((year) => year > state.selectedYear);
+      if (currentIndex < 0) {
+        stopChroniclePlay();
+        return;
+      }
+      jumpToChronicleYear(years[currentIndex]);
+    }, 2400);
+  }
+
+  function stopChroniclePlay() {
+    if (!state.isChroniclePlaying && !state.chronicleTimer) return;
+    state.isChroniclePlaying = false;
+    window.clearInterval(state.chronicleTimer);
+    state.chronicleTimer = 0;
+    updateChroniclePlayButton();
+  }
+
+  function updateChroniclePlayButton() {
+    if (!dynamicDom.chroniclePlay) return;
+    dynamicDom.chroniclePlay.classList.toggle("is-playing", state.isChroniclePlaying);
+    dynamicDom.chroniclePlay.title = state.isChroniclePlaying ? "暂停编年史" : "播放编年史";
+    dynamicDom.chroniclePlay.setAttribute("aria-label", dynamicDom.chroniclePlay.title);
+    dynamicDom.chroniclePlay.innerHTML = `<i data-lucide="${state.isChroniclePlaying ? "pause" : "play"}" aria-hidden="true"></i>`;
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function chronicleYears() {
+    return Array.from(new Set(state.chronology.map((event) => Number(event.year)).filter(Boolean))).sort((a, b) => a - b);
+  }
+
+  function jumpToChronicleYear(year) {
+    state.selectedYear = Number(year);
+    dom.timeline.value = String(year);
+    const achievement = state.items
+      .filter((item) => item.kind === "achievement" && Number(item.year) === Number(year))
+      .sort((a, b) => b.heat - a.heat)[0];
+    const event = state.chronology.find((entry) => Number(entry.year) === Number(year));
+    const concept = event?.concepts?.map((id) => state.itemById.get(id)).find(Boolean);
+    const target = achievement || concept;
+    if (target) {
+      openInfoCard(target);
+      focusOnItem(target);
+    } else {
+      applyFilters();
+    }
   }
 
   function animateCamera(cameraTarget, controlsTarget, duration) {
