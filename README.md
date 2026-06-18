@@ -82,6 +82,51 @@ npm run serve
 
 这个命令会先更新数据，再在本机启动网页服务。但如果要让外部所有人访问，还必须额外配置一个公网入口，比如固定域名、反向代理或 Cloudflare Tunnel。只用 `file://` 或 `localhost`，别人无法打开。
 
+## 国内稳定访问方案
+
+如果主要面向国内用户，建议使用国内云的静态托管 + CDN。项目已经内置云端构建命令：
+
+```bash
+npm run cloud:build
+```
+
+这个命令会先刷新当天数据，再把可发布文件导出到 `dist/`。云平台只需要发布 `dist/` 目录。
+
+### 推荐：腾讯云 EdgeOne Pages
+
+适合当前这个项目，原因是它可以直接连接 GitHub 仓库，并把静态页面发布到边缘节点。
+
+控制台里使用以下配置：
+
+```text
+Repository: luoshanqiu329/ai-concept-universe
+Install command: npm install --ignore-scripts
+Build command: npm run cloud:build
+Output directory: dist
+Node version: 20
+```
+
+项目根目录已经提供 `edgeone.json`，用于声明构建命令、输出目录和缓存策略。
+
+### 阿里云 / 腾讯云 COS / 火山引擎
+
+如果使用对象存储 + CDN，通用流程是：
+
+```text
+1. 执行 npm run cloud:build
+2. 上传 dist/ 内全部文件到 OSS / COS / TOS Bucket
+3. 开启静态网站托管，默认首页设置为 index.html
+4. 绑定 CDN 加速域名
+5. CDN 源站指向对象存储 Bucket
+6. 缓存策略建议：HTML 5-10 分钟，css/js/图片 1-7 天
+```
+
+如果使用中国大陆 CDN 并绑定自己的域名，通常需要域名完成 ICP 备案。未备案域名可以先用平台临时域名或境外/全球加速节点，但国内稳定性会弱一些。
+
+### 每日更新如何继续生效
+
+GitHub Actions 每天会运行 `scripts/update.js` 并把更新后的 `data/concepts.json` 写回仓库。国内云平台连接 GitHub 后，检测到仓库更新就会重新发布，因此不需要模型 token，也不需要用户下载任何东西。
+
 ## 企业微信个人签名
 
 企业微信签名建议写成：

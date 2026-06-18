@@ -5,6 +5,8 @@
   "description": "AI概念星系，一个纯前端 3D AI 知识地图。",
   "scripts": {
     "update": "node scripts/update.js",
+    "export": "node scripts/export-static.js",
+    "cloud:build": "npm run update && npm run export",
     "serve": "node scripts/start-local-site.js",
     "set-url": "node scripts/set-public-url.js"
   }
