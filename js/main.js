@@ -21,6 +21,62 @@
     achievement: { label: "AI成就恒星", color: "#ffe066" },
   };
 
+  const GEO_LOCATIONS = {
+    "openai": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "anthropic": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "xai": { name: "San Francisco / Austin", label: "旧金山 / 奥斯汀", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "google-deepmind": { name: "London", label: "伦敦", country: "英国", lat: 51.5074, lon: -0.1278 },
+    "meta-ai": { name: "Menlo Park", label: "门洛帕克", country: "美国", lat: 37.453, lon: -122.1817 },
+    "minimax": { name: "Shanghai", label: "上海", country: "中国", lat: 31.2304, lon: 121.4737 },
+    "moonshot-ai": { name: "Beijing", label: "北京", country: "中国", lat: 39.9042, lon: 116.4074 },
+    "deepseek": { name: "Hangzhou", label: "杭州", country: "中国", lat: 30.2741, lon: 120.1551 },
+    "mistral-ai": { name: "Paris", label: "巴黎", country: "法国", lat: 48.8566, lon: 2.3522 },
+    "perplexity": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "cohere": { name: "Toronto", label: "多伦多", country: "加拿大", lat: 43.6532, lon: -79.3832 },
+    "alan-turing": { name: "Cambridge", label: "剑桥", country: "英国", lat: 52.2053, lon: 0.1218 },
+    "geoffrey-hinton": { name: "Toronto", label: "多伦多", country: "加拿大", lat: 43.6532, lon: -79.3832 },
+    "yoshua-bengio": { name: "Montreal", label: "蒙特利尔", country: "加拿大", lat: 45.5017, lon: -73.5673 },
+    "yann-lecun": { name: "New York", label: "纽约", country: "美国", lat: 40.7128, lon: -74.006 },
+    "fei-fei-li": { name: "Stanford", label: "斯坦福", country: "美国", lat: 37.4275, lon: -122.1697 },
+    "andrew-ng": { name: "Stanford", label: "斯坦福", country: "美国", lat: 37.4275, lon: -122.1697 },
+    "ashish-vaswani": { name: "Mountain View", label: "山景城", country: "美国", lat: 37.3861, lon: -122.0839 },
+    "shunyu-yao": { name: "Princeton / San Francisco", label: "普林斯顿 / 旧金山", country: "美国", lat: 40.343, lon: -74.6514 },
+    "sam-altman": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "dario-amodei": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "demis-hassabis": { name: "London", label: "伦敦", country: "英国", lat: 51.5074, lon: -0.1278 },
+    "ilya-sutskever": { name: "Toronto / San Francisco", label: "多伦多 / 旧金山", country: "加拿大 / 美国", lat: 43.6532, lon: -79.3832 },
+    "andrej-karpathy": { name: "Stanford / San Francisco", label: "斯坦福 / 旧金山", country: "美国", lat: 37.4275, lon: -122.1697 },
+    "liang-wenfeng": { name: "Hangzhou", label: "杭州", country: "中国", lat: 30.2741, lon: 120.1551 },
+    "elon-musk": { name: "Austin / San Francisco", label: "奥斯汀 / 旧金山", country: "美国", lat: 30.2672, lon: -97.7431 },
+    "yan-junjie": { name: "Shanghai", label: "上海", country: "中国", lat: 31.2304, lon: 121.4737 },
+    "transformer": { name: "Mountain View", label: "山景城", country: "美国", lat: 37.3861, lon: -122.0839 },
+    "bert": { name: "Mountain View", label: "山景城", country: "美国", lat: 37.3861, lon: -122.0839 },
+    "gpt": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "rag": { name: "London / New York", label: "伦敦 / 纽约", country: "英国 / 美国", lat: 51.5074, lon: -0.1278 },
+    "lora": { name: "Seattle / Microsoft", label: "西雅图", country: "美国", lat: 47.6062, lon: -122.3321 },
+    "mcp": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "skills": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "agent-loop": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "react": { name: "Princeton", label: "普林斯顿", country: "美国", lat: 40.343, lon: -74.6514 },
+    "deepseek-r1": { name: "Hangzhou", label: "杭州", country: "中国", lat: 30.2741, lon: 120.1551 },
+    "achievement-1950-turing-test": { name: "Cambridge", label: "剑桥", country: "英国", lat: 52.2053, lon: 0.1218 },
+    "achievement-1956-dartmouth-workshop": { name: "Hanover", label: "汉诺威", country: "美国", lat: 43.7022, lon: -72.2896 },
+    "achievement-1986-backpropagation": { name: "Toronto", label: "多伦多", country: "加拿大", lat: 43.6532, lon: -79.3832 },
+    "achievement-1997-lstm-deep-blue": { name: "Munich / New York", label: "慕尼黑 / 纽约", country: "德国 / 美国", lat: 48.1351, lon: 11.582 },
+    "achievement-2006-deep-learning": { name: "Toronto", label: "多伦多", country: "加拿大", lat: 43.6532, lon: -79.3832 },
+    "achievement-2012-alexnet": { name: "Toronto", label: "多伦多", country: "加拿大", lat: 43.6532, lon: -79.3832 },
+    "achievement-2014-gan": { name: "Montreal", label: "蒙特利尔", country: "加拿大", lat: 45.5017, lon: -73.5673 },
+    "achievement-2017-transformer": { name: "Mountain View", label: "山景城", country: "美国", lat: 37.3861, lon: -122.0839 },
+    "achievement-2018-bert-gpt": { name: "Mountain View / San Francisco", label: "山景城 / 旧金山", country: "美国", lat: 37.3861, lon: -122.0839 },
+    "achievement-2020-rag-gpt-3": { name: "London / San Francisco", label: "伦敦 / 旧金山", country: "英国 / 美国", lat: 51.5074, lon: -0.1278 },
+    "achievement-2021-foundation-model": { name: "Stanford", label: "斯坦福", country: "美国", lat: 37.4275, lon: -122.1697 },
+    "achievement-2022-chatgpt-react": { name: "San Francisco / Princeton", label: "旧金山 / 普林斯顿", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "achievement-2023-agent-boom": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "achievement-2024-mcp": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "achievement-2025-reasoning-skills": { name: "San Francisco", label: "旧金山", country: "美国", lat: 37.7749, lon: -122.4194 },
+    "achievement-2026-ai-concept-universe": { name: "Global", label: "全球", country: "Global", lat: 22, lon: 24 },
+  };
+
   const STORAGE_KEY = "ai-concept-universe:last-seen-version";
   const CURRENT_YEAR = 2026;
   const EPOCH_YEAR = 1950;
@@ -86,6 +142,7 @@
     labels: new Map(),
     linkObjects: [],
     portraitCache: new Map(),
+    atlasItems: [],
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -238,6 +295,48 @@
   }
 
   function setupDynamicUi() {
+    const atlasLayer = document.createElement("section");
+    atlasLayer.id = "atlas-layer";
+    atlasLayer.className = "atlas-layer";
+    atlasLayer.hidden = true;
+    atlasLayer.setAttribute("aria-label", "AI World Atlas");
+    atlasLayer.innerHTML = `
+      <div class="atlas-stage">
+        <div class="atlas-header">
+          <p class="eyebrow">AI World Atlas</p>
+          <h2>全球 AI 版图</h2>
+          <p>公司、人物、论文与关键事件在世界地图上的分布。</p>
+        </div>
+        <svg class="atlas-map" viewBox="0 0 1000 500" aria-hidden="true">
+          <defs>
+            <linearGradient id="atlas-land" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(116,192,252,0.2)" />
+              <stop offset="52%" stop-color="rgba(121,223,193,0.11)" />
+              <stop offset="100%" stop-color="rgba(255,143,163,0.14)" />
+            </linearGradient>
+          </defs>
+          <path class="atlas-land" d="M74 180 C116 125 184 116 238 146 C278 166 300 151 333 179 C300 205 279 236 243 232 C210 228 195 256 161 247 C127 237 99 225 74 180Z" />
+          <path class="atlas-land" d="M245 260 C279 274 301 309 291 350 C284 382 304 407 281 449 C248 420 222 382 219 340 C217 306 229 281 245 260Z" />
+          <path class="atlas-land" d="M420 156 C456 124 512 132 545 158 C578 180 566 212 526 217 C493 221 459 203 420 214 C391 205 394 176 420 156Z" />
+          <path class="atlas-land" d="M486 222 C526 212 571 232 589 273 C609 317 585 372 552 400 C516 361 493 318 472 276 C461 254 464 234 486 222Z" />
+          <path class="atlas-land" d="M585 164 C645 114 744 124 822 171 C874 203 913 203 940 245 C873 260 832 232 776 245 C721 257 690 226 647 231 C604 236 565 204 585 164Z" />
+          <path class="atlas-land" d="M774 332 C812 309 864 318 895 352 C872 383 821 392 782 372 C761 360 754 346 774 332Z" />
+          <path class="atlas-land is-ice" d="M314 78 C364 46 420 52 453 82 C414 111 352 112 314 78Z" />
+        </svg>
+        <svg id="atlas-lines" class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div id="atlas-city-glows" class="atlas-city-glows" aria-hidden="true"></div>
+        <div id="atlas-nodes" class="atlas-nodes"></div>
+        <div id="atlas-meta" class="atlas-meta"></div>
+      </div>
+    `;
+    document.querySelector(".app-shell")?.appendChild(atlasLayer);
+    dynamicDom.atlasLayer = atlasLayer;
+    dynamicDom.atlasNodes = atlasLayer.querySelector("#atlas-nodes");
+    dynamicDom.atlasLines = atlasLayer.querySelector("#atlas-lines");
+    dynamicDom.atlasCityGlows = atlasLayer.querySelector("#atlas-city-glows");
+    dynamicDom.atlasMeta = atlasLayer.querySelector("#atlas-meta");
+    dynamicDom.atlasNodes.addEventListener("click", handleAtlasClick);
+
     const panel = document.querySelector(".filter-panel");
     const typeSection = dom.typeList?.closest(".panel-section");
     if (panel && typeSection) {
@@ -312,6 +411,7 @@
     if (!dynamicDom.viewModeList) return;
     const modes = [
       ["panorama", "全景"],
+      ["atlas", "地图"],
       ["chronicle", "编年史"],
       ["hot", "热点"],
       ["company", "公司"],
@@ -660,9 +760,12 @@
 
   function applyFilters() {
     let visibleCount = 0;
+    const atlasMode = state.viewMode === "atlas";
     const constellationIds = constellationRelatedIds();
     const hoverRelated = relatedIds(state.hoveredId || state.searchHitId);
     const focusRelated = constellationIds.size ? constellationIds : hoverRelated;
+    document.body.classList.toggle("is-atlas-mode", atlasMode);
+    if (dynamicDom.atlasLayer) dynamicDom.atlasLayer.hidden = !atlasMode;
     state.items.forEach((item) => {
       const mesh = state.meshes.get(item.id);
       if (!mesh) return;
@@ -699,6 +802,7 @@
     dom.sliceYear.textContent = String(state.selectedYear);
     dom.sliceCount.textContent = `${visibleCount} nodes`;
     updateConstellationHud(constellationIds);
+    renderAtlas();
     updateChronicle();
     updateLabels();
   }
@@ -713,6 +817,7 @@
 
   function matchesViewMode(item) {
     if (state.viewMode === "panorama" || state.viewMode === "chronicle") return true;
+    if (state.viewMode === "atlas") return Boolean(geoLocationFor(item));
     if (state.viewMode === "hot") {
       const changed = state.payload?.meta?.changedConcepts || [];
       return Number(item.heat || 0) >= 86 || changed.some((change) => change.id === item.id) || item.kind === "achievement" && Number(item.year) >= 2022;
@@ -761,7 +866,13 @@
     const root = state.itemById.get(state.constellationId);
     dynamicDom.constellationHud.hidden = !root;
     if (!root) return;
-    dynamicDom.constellationTitle.textContent = `${root.name} 星座 · ${Math.max(0, constellationIds.size - 1)} related`;
+    const location = geoLocationFor(root);
+    dynamicDom.constellationHud.querySelector(".constellation-kicker").textContent = state.viewMode === "atlas" ? "AI WORLD ATLAS" : "CONSTELLATION";
+    dynamicDom.exitConstellation.textContent = "退出聚焦";
+    dynamicDom.constellationTitle.textContent =
+      state.viewMode === "atlas" && location
+        ? `${root.name} · ${location.label || location.name}`
+        : `${root.name} 星座 · ${Math.max(0, constellationIds.size - 1)} related`;
   }
 
   function enterConstellation(item) {
@@ -772,6 +883,139 @@
   function clearConstellation() {
     state.constellationId = null;
     applyFilters();
+  }
+
+  function renderAtlas() {
+    if (!dynamicDom.atlasLayer || state.viewMode !== "atlas") {
+      state.atlasItems = [];
+      return;
+    }
+
+    const visibleItems = state.items
+      .filter(isItemVisible)
+      .map((item) => ({ item, location: geoLocationFor(item) }))
+      .filter((entry) => entry.location)
+      .sort((a, b) => kindRank(a.item.kind) - kindRank(b.item.kind) || b.item.heat - a.item.heat);
+    state.atlasItems = visibleItems;
+
+    const constellationIds = constellationRelatedIds();
+    const hasFocus = constellationIds.size > 0;
+    const cityGroups = groupBy(visibleItems, (entry) => entry.location.name);
+    const focusItem = state.itemById.get(state.constellationId);
+
+    dynamicDom.atlasCityGlows.innerHTML = Array.from(cityGroups.entries())
+      .map(([city, entries]) => {
+        const { x, y } = projectGeo(entries[0].location);
+        const maxHeat = Math.max(...entries.map((entry) => entry.item.heat || 50));
+        const color = itemColor(entries[0].item).getStyle();
+        return `<span class="atlas-city-glow" style="left:${x}%;top:${y}%;--city-color:${color};--city-size:${Math.max(34, Math.min(94, maxHeat))}px" title="${escapeHtml(city)}"></span>`;
+      })
+      .join("");
+
+    dynamicDom.atlasNodes.innerHTML = visibleItems
+      .map((entry) => {
+        const { item, location } = entry;
+        const { x, y } = projectGeo(location);
+        const peers = cityGroups.get(location.name) || [];
+        const localIndex = peers.findIndex((peer) => peer.item.id === item.id);
+        const spread = atlasSpread(localIndex, peers.length);
+        const color = itemColor(item).getStyle();
+        const related = !hasFocus || constellationIds.has(item.id);
+        const size = atlasNodeSize(item);
+        const zIndex = 10 + (4 - kindRank(item.kind)) * 3 + Math.round((item.heat || 50) / 22);
+        const classes = ["atlas-node", `is-${item.kind}`, item.id === state.constellationId ? "is-focus" : "", related ? "" : "is-dim"].filter(Boolean).join(" ");
+        return `
+          <button class="${classes}" type="button" data-target="${escapeHtml(item.id)}" title="${escapeHtml(item.name)} · ${escapeHtml(location.label || location.name)}" style="left:${x}%;top:${y}%;--node-color:${color};--node-size:${size}px;--node-z:${zIndex};--dx:${spread.x}px;--dy:${spread.y}px">
+            <span class="atlas-pulse"></span>
+            <span class="atlas-dot"></span>
+            <span class="atlas-node-label">${escapeHtml(item.name)}</span>
+          </button>
+        `;
+      })
+      .join("");
+
+    const geoById = new Map(visibleItems.map((entry) => [entry.item.id, entry.location]));
+    dynamicDom.atlasLines.innerHTML = state.links
+      .filter((link) => geoById.has(link.sourceId) && geoById.has(link.targetId))
+      .filter((link) => !hasFocus || (constellationIds.has(link.sourceId) && constellationIds.has(link.targetId)))
+      .slice(0, hasFocus ? 80 : 34)
+      .map((link) => {
+        const start = projectGeo(geoById.get(link.sourceId));
+        const end = projectGeo(geoById.get(link.targetId));
+        const color = new THREE.Color(relationColor(link)).getStyle();
+        const opacity = hasFocus ? 0.45 : 0.12;
+        return `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${color}" stroke-opacity="${opacity}" />`;
+      })
+      .join("");
+
+    const topCities = Array.from(cityGroups.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 4)
+      .map(([city, entries]) => `${city} ${entries.length}`)
+      .join(" · ");
+    dynamicDom.atlasMeta.innerHTML = `
+      <span>${visibleItems.length} geo nodes</span>
+      <strong>${focusItem ? `${focusItem.name} · ${geoLocationFor(focusItem)?.label || ""}` : topCities || "全球 AI 版图"}</strong>
+    `;
+  }
+
+  function handleAtlasClick(event) {
+    const target = event.target.closest("[data-target]");
+    if (!target) return;
+    const item = state.itemById.get(target.dataset.target);
+    if (!item) return;
+    activateItem(item);
+  }
+
+  function projectGeo(location) {
+    return {
+      x: ((location.lon + 180) / 360) * 100,
+      y: ((90 - location.lat) / 180) * 100,
+    };
+  }
+
+  function atlasSpread(index, total) {
+    if (total <= 1) return { x: 0, y: 0 };
+    const radius = Math.min(108, 24 + total * 7.4);
+    const angle = (index / total) * Math.PI * 2 - Math.PI / 2;
+    return {
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
+  }
+
+  function atlasNodeSize(item) {
+    const base = item.kind === "company" ? 15 : item.kind === "achievement" ? 14 : item.kind === "person" ? 12 : 10;
+    return Math.round(base + Math.max(0, Math.min(100, item.heat || 50)) / 18);
+  }
+
+  function kindRank(kind) {
+    return { company: 0, achievement: 1, person: 2, concept: 3 }[kind] ?? 4;
+  }
+
+  function geoLocationFor(item) {
+    if (!item) return null;
+    if (GEO_LOCATIONS[item.id]) return GEO_LOCATIONS[item.id];
+    if (item.kind === "company") return geoFromHeadquarters(item.headquarters);
+    if (item.kind === "achievement") {
+      const byConcept = (item.concepts || []).map((id) => GEO_LOCATIONS[id]).find(Boolean);
+      if (byConcept) return byConcept;
+    }
+    return null;
+  }
+
+  function geoFromHeadquarters(value = "") {
+    const text = String(value).toLowerCase();
+    if (text.includes("旧金山") || text.includes("san francisco")) return GEO_LOCATIONS.openai;
+    if (text.includes("伦敦") || text.includes("london")) return GEO_LOCATIONS["google-deepmind"];
+    if (text.includes("山景") || text.includes("mountain view")) return GEO_LOCATIONS.transformer;
+    if (text.includes("门洛") || text.includes("menlo")) return GEO_LOCATIONS["meta-ai"];
+    if (text.includes("上海") || text.includes("shanghai")) return GEO_LOCATIONS.minimax;
+    if (text.includes("北京") || text.includes("beijing")) return GEO_LOCATIONS["moonshot-ai"];
+    if (text.includes("杭州") || text.includes("hangzhou")) return GEO_LOCATIONS.deepseek;
+    if (text.includes("巴黎") || text.includes("paris")) return GEO_LOCATIONS["mistral-ai"];
+    if (text.includes("多伦多") || text.includes("toronto")) return GEO_LOCATIONS.cohere;
+    return null;
   }
 
   function handlePointerMove(event) {
@@ -1360,6 +1604,16 @@
     items.forEach((item) => {
       const key = getter(item);
       map.set(key, (map.get(key) || 0) + 1);
+    });
+    return map;
+  }
+
+  function groupBy(items, getter) {
+    const map = new Map();
+    items.forEach((item) => {
+      const key = getter(item);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(item);
     });
     return map;
   }
