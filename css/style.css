@@ -843,6 +843,7 @@ a.model-pill:hover {
   border: 1px solid rgba(209, 225, 255, 0.12);
   border-radius: 22px;
   background:
+    radial-gradient(ellipse at 52% 18%, rgba(255, 224, 102, 0.1), transparent 30%),
     radial-gradient(ellipse at 50% 50%, rgba(140, 183, 255, 0.16), transparent 42%),
     radial-gradient(ellipse at 78% 35%, rgba(121, 223, 193, 0.1), transparent 32%),
     linear-gradient(145deg, rgba(10, 13, 28, 0.34), rgba(3, 4, 10, 0.16));
@@ -905,6 +906,56 @@ a.model-pill:hover {
   color: rgba(227, 235, 255, 0.64);
   font-size: 12px;
   line-height: 1.55;
+}
+
+.atlas-archive-plaque {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  z-index: 8;
+  display: grid;
+  justify-items: center;
+  width: min(380px, 36vw);
+  padding: 12px 18px 13px;
+  border: 1px solid rgba(255, 224, 153, 0.18);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 226, 160, 0.18), rgba(18, 23, 42, 0.58) 42%, rgba(7, 9, 18, 0.68)),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 224, 102, 0.18), transparent 58%);
+  color: rgba(244, 247, 255, 0.82);
+  pointer-events: none;
+  text-align: center;
+  box-shadow: 0 18px 70px rgba(0, 0, 0, 0.38), 0 0 46px rgba(255, 224, 102, 0.08);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  transform: translateX(-50%);
+}
+
+.atlas-archive-plaque span {
+  color: rgba(121, 223, 193, 0.82);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.atlas-archive-plaque strong {
+  margin-top: 3px;
+  color: #fff4c2;
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1.05;
+  text-shadow: 0 0 26px rgba(255, 224, 102, 0.26);
+}
+
+.atlas-archive-plaque small {
+  margin-top: 5px;
+  overflow: hidden;
+  max-width: 100%;
+  color: rgba(244, 247, 255, 0.64);
+  font-size: 10px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .atlas-globe,
@@ -1044,6 +1095,69 @@ a.model-pill:hover {
   opacity: 0.86;
 }
 
+.atlas-explore-dock {
+  position: absolute;
+  left: 50%;
+  bottom: 64px;
+  z-index: 8;
+  display: flex;
+  gap: 8px;
+  width: min(610px, 58vw);
+  padding: 8px;
+  border: 1px solid rgba(209, 225, 255, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.72), rgba(7, 9, 18, 0.54)),
+    radial-gradient(ellipse at 50% 0%, rgba(255, 224, 102, 0.1), transparent 64%);
+  box-shadow: 0 18px 68px rgba(0, 0, 0, 0.34), 0 0 44px rgba(116, 192, 252, 0.08);
+  pointer-events: auto;
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  transform: translateX(-50%);
+}
+
+.atlas-dock-chip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1px 8px;
+  min-width: 0;
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid rgba(214, 226, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(8, 11, 22, 0.42);
+  color: rgba(244, 247, 255, 0.78);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.atlas-dock-chip span,
+.atlas-dock-chip strong {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.atlas-dock-chip small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: rgba(227, 235, 255, 0.46);
+  font-size: 9px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atlas-dock-chip:hover,
+.atlas-dock-chip.is-active {
+  transform: translateY(-2px);
+  border-color: rgba(255, 224, 102, 0.28);
+  background:
+    linear-gradient(145deg, rgba(34, 43, 74, 0.78), rgba(9, 12, 22, 0.58)),
+    radial-gradient(circle at 22% 0%, rgba(255, 224, 102, 0.14), transparent 52%);
+}
+
 .atlas-city-label {
   position: absolute;
   display: inline-flex;
@@ -1143,6 +1257,32 @@ a.model-pill:hover {
   pointer-events: none;
 }
 
+.atlas-kind-glyph {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 3px);
+  padding: 2px 5px;
+  border: 1px solid color-mix(in srgb, var(--node-color) 28%, rgba(255, 255, 255, 0.08));
+  border-radius: 999px;
+  background: rgba(5, 7, 14, 0.56);
+  color: rgba(244, 247, 255, 0.62);
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.82);
+  transform: translateX(-50%) translateY(2px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.atlas-node.is-focus .atlas-kind-glyph,
+.atlas-node:hover .atlas-kind-glyph,
+.atlas-node:focus-visible .atlas-kind-glyph {
+  opacity: 0.92;
+  transform: translateX(-50%);
+}
+
 .atlas-dot,
 .atlas-pulse {
   position: absolute;
@@ -1174,19 +1314,36 @@ a.model-pill:hover {
 
 .atlas-node.is-company .atlas-dot {
   border-radius: 8px;
+  transform: rotate(45deg);
+}
+
+.atlas-node.is-company .atlas-node-label {
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(244, 247, 255, 0.14), rgba(5, 7, 14, 0.68));
 }
 
 .atlas-node.is-person .atlas-dot {
   clip-path: polygon(50% 0%, 62% 34%, 98% 35%, 69% 56%, 80% 91%, 50% 70%, 20% 91%, 31% 56%, 2% 35%, 38% 34%);
 }
 
+.atlas-node.is-person .atlas-node-label {
+  color: rgba(255, 236, 153, 0.88);
+}
+
 .atlas-node.is-achievement .atlas-dot {
   width: calc(var(--node-size, 12px) + 4px);
   height: calc(var(--node-size, 12px) + 4px);
+  border-radius: 5px 5px 999px 999px;
   box-shadow:
     0 0 18px var(--node-color),
     0 0 54px color-mix(in srgb, var(--node-color) 42%, transparent),
     0 0 0 7px color-mix(in srgb, var(--node-color) 9%, transparent);
+}
+
+.atlas-node.is-achievement .atlas-node-label {
+  border-color: rgba(255, 224, 102, 0.28);
+  background: linear-gradient(135deg, rgba(255, 224, 102, 0.16), rgba(5, 7, 14, 0.68));
+  color: rgba(255, 244, 194, 0.9);
 }
 
 .atlas-node-label {
@@ -1224,7 +1381,7 @@ a.model-pill:hover {
 .atlas-meta {
   position: absolute;
   right: 20px;
-  bottom: 18px;
+  bottom: 134px;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -1246,7 +1403,7 @@ a.model-pill:hover {
 .atlas-legend {
   position: absolute;
   left: 24px;
-  bottom: 18px;
+  bottom: 134px;
   z-index: 7;
   display: flex;
   flex-wrap: wrap;
@@ -1461,6 +1618,10 @@ a.model-pill:hover {
     font-size: 23px;
   }
 
+  .atlas-archive-plaque {
+    display: none;
+  }
+
   .atlas-city-rail {
     left: 18px;
     right: 18px;
@@ -1474,6 +1635,23 @@ a.model-pill:hover {
 
   .atlas-city-chip {
     min-width: 150px;
+  }
+
+  .atlas-explore-dock {
+    left: 18px;
+    right: 18px;
+    bottom: 106px;
+    width: auto;
+    overflow: auto;
+    transform: none;
+  }
+
+  .atlas-dock-chip {
+    min-width: 132px;
+  }
+
+  .atlas-legend {
+    display: none;
   }
 
   .atlas-node-label {

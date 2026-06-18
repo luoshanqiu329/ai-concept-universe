@@ -326,17 +326,19 @@
       <div class="atlas-stage">
         <div id="atlas-globe" class="atlas-globe" aria-hidden="true"></div>
         <div class="atlas-header">
-          <p class="eyebrow">AI World Atlas</p>
-          <h2>3D 全球 AI 版图</h2>
-          <p>拖拽旋转地球，观察公司、人物、论文与关键事件在真实地理空间中的分布。</p>
+          <p class="eyebrow">AI Civilization Atlas</p>
+          <h2>全球 AI 文明地貌</h2>
+          <p>公司星港、模型恒星、论文光碑与关键人物共同构成 AI 文明地貌。</p>
         </div>
+        <div id="atlas-archive-plaque" class="atlas-archive-plaque" aria-hidden="true"></div>
         <div id="atlas-city-rail" class="atlas-city-rail" aria-label="AI 热区"></div>
         <div id="atlas-nodes" class="atlas-nodes"></div>
+        <div id="atlas-explore-dock" class="atlas-explore-dock" aria-label="AI 文明分层"></div>
         <div class="atlas-legend" aria-hidden="true">
-          <span><i class="is-company"></i>公司</span>
-          <span><i class="is-person"></i>人物</span>
-          <span><i class="is-achievement"></i>成就</span>
-          <span><i class="is-concept"></i>概念</span>
+          <span><i class="is-company"></i>星港</span>
+          <span><i class="is-person"></i>先驱</span>
+          <span><i class="is-achievement"></i>光碑</span>
+          <span><i class="is-concept"></i>航道</span>
         </div>
         <div id="atlas-meta" class="atlas-meta"></div>
       </div>
@@ -345,11 +347,14 @@
     dynamicDom.atlasLayer = atlasLayer;
     dynamicDom.atlasStage = atlasLayer.querySelector(".atlas-stage");
     dynamicDom.atlasGlobe = atlasLayer.querySelector("#atlas-globe");
+    dynamicDom.atlasPlaque = atlasLayer.querySelector("#atlas-archive-plaque");
     dynamicDom.atlasCityRail = atlasLayer.querySelector("#atlas-city-rail");
     dynamicDom.atlasNodes = atlasLayer.querySelector("#atlas-nodes");
+    dynamicDom.atlasDock = atlasLayer.querySelector("#atlas-explore-dock");
     dynamicDom.atlasMeta = atlasLayer.querySelector("#atlas-meta");
     dynamicDom.atlasNodes.addEventListener("click", handleAtlasClick);
     dynamicDom.atlasCityRail.addEventListener("click", handleAtlasCityRailClick);
+    dynamicDom.atlasDock.addEventListener("click", handleAtlasDockClick);
     dynamicDom.atlasStage.addEventListener("click", handleAtlasStageClick);
 
     const panel = document.querySelector(".filter-panel");
@@ -935,17 +940,22 @@
     const anchors = new Map();
 
     const cityEntries = Array.from(cityGroups.entries())
-      .map(([city, entries]) => {
+      .map(([city, entries], index) => {
         const heat = Math.max(...entries.map((entry) => entry.item.heat || 50));
         const location = entries[0].location;
         const anchor = globePosition(location, GLOBE_RADIUS + 3.6);
         const lead = entries.slice().sort((a, b) => kindRank(a.item.kind) - kindRank(b.item.kind) || b.item.heat - a.item.heat)[0];
-        addAtlasCityGlow(entries, anchor, itemColor(lead.item).getStyle());
+        addAtlasCityGlow(entries, anchor, itemColor(lead.item).getStyle(), {
+          related: !focusCity || city === focusCity,
+          rank: index,
+        });
         return { city, entries, heat, location, anchor };
       })
       .sort((a, b) => b.entries.length - a.entries.length || b.heat - a.heat)
       .slice(0, 9);
     state.atlasCityEntries = cityEntries;
+    renderAtlasPlaque(visibleItems, cityEntries);
+    renderAtlasDock(visibleItems);
     renderAtlasCityRail(cityEntries);
 
     const cityHtml = cityEntries
@@ -972,6 +982,7 @@
           <button class="${classes}" type="button" data-target="${escapeHtml(item.id)}" title="${escapeHtml(item.name)} · ${escapeHtml(location.label || location.name)}" style="--node-color:${color};--node-size:${size}px;--node-z:${zIndex}">
             <span class="atlas-pulse"></span>
             <span class="atlas-dot"></span>
+            <span class="atlas-kind-glyph" aria-hidden="true">${escapeHtml(atlasGlyphForKind(item.kind))}</span>
             <span class="atlas-node-label">${escapeHtml(item.name)}</span>
           </button>
         `;
@@ -1010,10 +1021,51 @@
       .map(([city, entries]) => `${city} ${entries.length}`)
       .join(" · ");
     dynamicDom.atlasMeta.innerHTML = `
-      <span>${visibleItems.length} geo nodes · 3D Earth</span>
+      <span>${visibleItems.length} 星体 · ${cityGroups.size} 热区</span>
       <strong>${focusItem ? `${focusItem.name} · ${geoLocationFor(focusItem)?.label || ""}` : focusCity ? atlasCitySummary(focusCity) : topCities || "全球 AI 版图"}</strong>
     `;
     updateAtlasLabels(true);
+  }
+
+  function renderAtlasPlaque(visibleItems, cityEntries) {
+    if (!dynamicDom.atlasPlaque) return;
+    const stats = state.payload?.meta || {};
+    const start = stats.chronologyStart || EPOCH_YEAR;
+    const end = stats.chronologyEnd || CURRENT_YEAR;
+    const topCity = cityEntries[0]?.location?.label || cityEntries[0]?.city || "全球";
+    dynamicDom.atlasPlaque.innerHTML = `
+      <span>AI CIVILIZATION ARCHIVE</span>
+      <strong>AI 文明档案馆</strong>
+      <small>${start}-${end} · ${visibleItems.length} 个星体 · ${cityEntries.length} 处文明热区 · ${escapeHtml(topCity)}最亮</small>
+    `;
+  }
+
+  function renderAtlasDock(visibleItems) {
+    if (!dynamicDom.atlasDock) return;
+    const counts = countBy(visibleItems, (entry) => entry.item.kind);
+    const allTypes = Object.keys(TYPE_CONFIG);
+    const activeSingle = state.activeTypes.size === 1 ? Array.from(state.activeTypes)[0] : "all";
+    const filters = [
+      { key: "all", label: "全域", detail: "AI 文明全景", count: visibleItems.length },
+      { key: "company", label: "星港", detail: "顶尖 AI 公司", count: counts.get("company") || 0 },
+      { key: "concept", label: "航道", detail: "模型与技术概念", count: counts.get("concept") || 0 },
+      { key: "person", label: "先驱", detail: "关键人物", count: counts.get("person") || 0 },
+      { key: "achievement", label: "光碑", detail: "AI 编年史", count: counts.get("achievement") || 0 },
+    ];
+    dynamicDom.atlasDock.innerHTML = filters
+      .map((filter) => {
+        const active = filter.key === "all"
+          ? state.activeTypes.size === allTypes.length
+          : activeSingle === filter.key;
+        return `
+          <button class="atlas-dock-chip ${active ? "is-active" : ""}" type="button" data-atlas-filter="${filter.key}">
+            <span>${escapeHtml(filter.label)}</span>
+            <strong>${filter.count}</strong>
+            <small>${escapeHtml(filter.detail)}</small>
+          </button>
+        `;
+      })
+      .join("");
   }
 
   function renderAtlasCityRail(cityEntries) {
@@ -1169,7 +1221,7 @@
   function addAtlasPin(item, anchor, related, color, size) {
     const pinScale = Math.max(1.8, size / 5.1);
     const pin = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 12, 8),
+      atlasGeometryForItem(item),
       new THREE.MeshBasicMaterial({
         color,
         transparent: true,
@@ -1180,9 +1232,11 @@
     );
     pin.position.copy(anchor);
     pin.scale.setScalar(pinScale);
+    pin.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), anchor.clone().normalize());
     pin.userData.itemId = item.id;
     state.atlasNodeGroup.add(pin);
     state.atlasNodeMeshes.set(item.id, pin);
+    addAtlasItemMonument(item, anchor, related, color, pinScale);
 
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({
@@ -1199,14 +1253,67 @@
     state.atlasNodeGroup.add(glow);
   }
 
-  function addAtlasCityGlow(entries, anchor, color) {
+  function atlasGeometryForItem(item) {
+    if (item.kind === "company") return new THREE.BoxGeometry(1.28, 1.28, 1.28);
+    if (item.kind === "person") return new THREE.OctahedronGeometry(1.08, 0);
+    if (item.kind === "achievement") return new THREE.ConeGeometry(1.05, 1.75, 5);
+    return new THREE.SphereGeometry(1, 12, 8);
+  }
+
+  function addAtlasItemMonument(item, anchor, related, color, pinScale) {
+    const normal = anchor.clone().normalize();
+    if (item.kind === "achievement") {
+      addAtlasLightColumn(anchor, color, {
+        height: 16 + pinScale * 3.2,
+        radius: 0.22 + pinScale * 0.05,
+        opacity: related ? 0.2 : 0.035,
+        topScale: pinScale * 5.8,
+      });
+      return;
+    }
+    if (item.kind === "company") {
+      const base = new THREE.Mesh(
+        new THREE.CylinderGeometry(pinScale * 0.86, pinScale * 1.16, 1.8, 6, 1, true),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: related ? 0.22 : 0.045,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })
+      );
+      base.position.copy(anchor.clone().add(normal.clone().multiplyScalar(-0.2)));
+      base.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+      state.atlasNodeGroup.add(base);
+      return;
+    }
+    if (item.kind === "person") {
+      const halo = new THREE.Mesh(
+        new THREE.RingGeometry(pinScale * 1.45, pinScale * 1.7, 24),
+        new THREE.MeshBasicMaterial({
+          color,
+          transparent: true,
+          opacity: related ? 0.18 : 0.035,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })
+      );
+      halo.position.copy(anchor.clone().multiplyScalar(1.004));
+      halo.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
+      state.atlasNodeGroup.add(halo);
+    }
+  }
+
+  function addAtlasCityGlow(entries, anchor, color, options = {}) {
     const strength = Math.min(1, entries.length / 12);
     const glow = new THREE.Sprite(
       new THREE.SpriteMaterial({
         map: haloTexture(),
         color,
         transparent: true,
-        opacity: 0.09 + strength * 0.18,
+        opacity: options.related === false ? 0.045 : 0.09 + strength * 0.18,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       })
@@ -1214,6 +1321,12 @@
     glow.position.copy(anchor.clone().multiplyScalar(1.002));
     glow.scale.setScalar(28 + entries.length * 4.4);
     state.atlasNodeGroup.add(glow);
+    addAtlasLightColumn(anchor, color, {
+      height: 18 + entries.length * 2.4,
+      radius: 0.34 + strength * 0.48,
+      opacity: options.related === false ? 0.035 : 0.12 + strength * 0.16,
+      topScale: 14 + entries.length * 1.7,
+    });
 
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(3.4 + entries.length * 0.18, 4.4 + entries.length * 0.22, 28),
@@ -1229,6 +1342,41 @@
     ring.position.copy(anchor.clone().multiplyScalar(1.004));
     ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), anchor.clone().normalize());
     state.atlasNodeGroup.add(ring);
+  }
+
+  function addAtlasLightColumn(anchor, color, options = {}) {
+    const normal = anchor.clone().normalize();
+    const height = options.height || 20;
+    const radius = options.radius || 0.36;
+    const opacity = options.opacity || 0.12;
+    const column = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius * 0.5, radius, height, 10, 1, true),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    column.position.copy(anchor.clone().add(normal.clone().multiplyScalar(height / 2)));
+    column.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+    state.atlasNodeGroup.add(column);
+
+    const topLight = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: haloTexture(),
+        color,
+        transparent: true,
+        opacity: Math.min(0.38, opacity * 1.8),
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    topLight.position.copy(anchor.clone().add(normal.clone().multiplyScalar(height)));
+    topLight.scale.setScalar(options.topScale || height * 0.64);
+    state.atlasNodeGroup.add(topLight);
   }
 
   function labelOffsetForAtlasEntry(entry, cityGroups) {
@@ -1442,6 +1590,26 @@
     focusAtlasCity(target.dataset.city || "");
   }
 
+  function handleAtlasDockClick(event) {
+    const target = event.target.closest("[data-atlas-filter]");
+    if (!target) return;
+    event.stopPropagation();
+    const filter = target.dataset.atlasFilter;
+    if (filter === "all") {
+      state.activeTypes = new Set(Object.keys(TYPE_CONFIG));
+    } else if (TYPE_CONFIG[filter]) {
+      state.activeTypes = new Set([filter]);
+    }
+    state.atlasFocusCity = null;
+    state.constellationId = null;
+    state.selectedId = null;
+    state.searchHitId = null;
+    dom.infoCard.hidden = true;
+    dom.search.value = "";
+    buildControls();
+    applyFilters();
+  }
+
   function focusAtlasCity(cityName) {
     state.atlasFocusCity = cityName || null;
     state.constellationId = null;
@@ -1456,7 +1624,7 @@
   }
 
   function handleAtlasStageClick(event) {
-    if (state.viewMode !== "atlas" || event.target.closest("[data-target]") || event.target.closest("[data-city]") || !state.atlasRenderer) return;
+    if (state.viewMode !== "atlas" || event.target.closest("[data-target]") || event.target.closest("[data-city], [data-atlas-filter]") || !state.atlasRenderer) return;
     if (state.atlasControls?.shouldIgnoreClick?.()) return;
     const rect = state.atlasRenderer.domElement.getBoundingClientRect();
     state.atlasPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1495,6 +1663,16 @@
   function atlasNodeSize(item) {
     const base = item.kind === "company" ? 15 : item.kind === "achievement" ? 14 : item.kind === "person" ? 12 : 10;
     return Math.round(base + Math.max(0, Math.min(100, item.heat || 50)) / 18);
+  }
+
+  function atlasGlyphForKind(kind) {
+    const glyphs = {
+      company: "星港",
+      concept: "航道",
+      person: "先驱",
+      achievement: "光碑",
+    };
+    return glyphs[kind] || "星体";
   }
 
   function kindRank(kind) {
@@ -2048,7 +2226,7 @@
     };
 
     element.addEventListener("pointerdown", (event) => {
-      if (event.target.closest("[data-target], [data-city], .atlas-meta, .atlas-city-rail")) return;
+      if (event.target.closest("[data-target], [data-city], [data-atlas-filter], .atlas-meta, .atlas-city-rail, .atlas-explore-dock")) return;
       dragging = true;
       moved = false;
       pointerStart.x = event.clientX;
