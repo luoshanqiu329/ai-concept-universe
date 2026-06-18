@@ -182,14 +182,17 @@
     state.width = dom.stage.clientWidth || window.innerWidth;
     state.height = dom.stage.clientHeight || window.innerHeight;
     state.scene = new THREE.Scene();
-    state.scene.fog = new THREE.FogExp2(0x07070d, 0.0017);
-    state.camera = new THREE.PerspectiveCamera(52, state.width / state.height, 0.1, 5000);
-    state.camera.position.set(0, 175, 440);
+    state.scene.fog = new THREE.FogExp2(0x05050a, 0.00125);
+    state.camera = new THREE.PerspectiveCamera(50, state.width / state.height, 0.1, 5200);
+    state.camera.position.set(0, 168, 468);
 
     state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
     state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     state.renderer.setSize(state.width, state.height);
     state.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    state.renderer.toneMappingExposure = 1.08;
+    state.renderer.setClearColor(0x000000, 0);
     dom.stage.prepend(state.renderer.domElement);
 
     state.controls = createGalaxyControls(state.camera, state.renderer.domElement);
@@ -198,11 +201,14 @@
     state.galaxy = new THREE.Group();
     state.scene.add(state.galaxy);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+    const ambient = new THREE.AmbientLight(0xdfe8ff, 0.96);
     state.scene.add(ambient);
-    const coreLight = new THREE.PointLight(0x8cb7ff, 1.7, 650);
-    coreLight.position.set(0, 80, 120);
+    const coreLight = new THREE.PointLight(0x8cb7ff, 2.25, 760);
+    coreLight.position.set(0, 82, 128);
     state.scene.add(coreLight);
+    const warmRim = new THREE.PointLight(0xffd6a5, 0.82, 720);
+    warmRim.position.set(-260, 120, -180);
+    state.scene.add(warmRim);
     addGalaxyMist();
   }
 
@@ -306,7 +312,7 @@
       const material = new THREE.MeshBasicMaterial({
         color,
         transparent: true,
-        opacity: 0.92,
+        opacity: item.kind === "achievement" ? 0.98 : 0.9,
         depthWrite: false,
       });
       const mesh = new THREE.Mesh(sphere, material);
@@ -314,7 +320,8 @@
       mesh.position.set(item.position.x, item.position.y, item.position.z);
       mesh.userData.itemId = item.id;
       mesh.userData.baseScale = size;
-      mesh.userData.baseOpacity = 0.92;
+      mesh.userData.baseOpacity = material.opacity;
+      mesh.userData.pulse = (stableHash(`pulse-${item.id}`) % 1000) / 1000;
       state.galaxy.add(mesh);
 
       const halo = new THREE.Sprite(
@@ -322,15 +329,37 @@
           map: haloTexture(),
           color,
           transparent: true,
-          opacity: item.kind === "company" ? 0.18 : item.kind === "person" ? 0.18 : 0.14,
+          opacity: item.kind === "achievement" ? 0.22 : item.kind === "company" ? 0.19 : item.kind === "person" ? 0.17 : 0.125,
           depthWrite: false,
+          depthTest: false,
           blending: THREE.AdditiveBlending,
         })
       );
-      halo.scale.setScalar(size * (item.kind === "company" ? 5.2 : 4.8));
+      halo.scale.setScalar(size * (item.kind === "achievement" ? 7.2 : item.kind === "company" ? 5.6 : 4.7));
       halo.position.copy(mesh.position);
       halo.userData.follows = mesh;
+      halo.userData.baseOpacity = halo.material.opacity;
       state.galaxy.add(halo);
+
+      if (item.kind === "achievement") {
+        const starburst = new THREE.Sprite(
+          new THREE.SpriteMaterial({
+            map: starburstTexture(),
+            color,
+            transparent: true,
+            opacity: 0.18,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.AdditiveBlending,
+          })
+        );
+        starburst.scale.set(size * 10.2, size * 10.2, 1);
+        starburst.position.copy(mesh.position);
+        starburst.userData.follows = mesh;
+        starburst.userData.starburst = true;
+        starburst.userData.baseOpacity = starburst.material.opacity;
+        state.galaxy.add(starburst);
+      }
 
       if (item.kind !== "concept") {
         const ring = new THREE.Mesh(
@@ -346,6 +375,7 @@
         ring.position.copy(mesh.position);
         ring.lookAt(state.camera.position);
         ring.userData.follows = mesh;
+        ring.userData.baseOpacity = ring.material.opacity;
         state.galaxy.add(ring);
       }
 
@@ -378,31 +408,31 @@
   }
 
   function addGalaxyMist() {
-    const count = 1600;
+    const count = 2600;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     const color = new THREE.Color();
     for (let index = 0; index < count; index += 1) {
       const hash = stableHash(`mist-${index}`);
       const arm = hash % 9;
-      const radius = 34 + ((hash >>> 3) % 360);
-      const angle = (arm / 9) * Math.PI * 2 + radius * 0.011 + (((hash >>> 12) % 100) / 100 - 0.5) * 0.52;
-      const y = (((hash >>> 22) % 100) / 100 - 0.5) * 86;
+      const radius = 24 + Math.pow(((hash >>> 3) % 1000) / 1000, 0.72) * 390;
+      const angle = (arm / 9) * Math.PI * 2 + radius * 0.013 + (((hash >>> 12) % 100) / 100 - 0.5) * 0.74;
+      const y = (((hash >>> 22) % 100) / 100 - 0.5) * (64 + radius * 0.16);
       positions[index * 3] = Math.cos(angle) * radius;
       positions[index * 3 + 1] = y;
       positions[index * 3 + 2] = Math.sin(angle) * radius;
       color.set(CATEGORY_CONFIG[Object.keys(CATEGORY_CONFIG)[arm]]?.color || "#8cb7ff");
-      colors[index * 3] = color.r * 0.7;
-      colors[index * 3 + 1] = color.g * 0.7;
-      colors[index * 3 + 2] = color.b * 0.7;
+      colors[index * 3] = color.r * 0.82;
+      colors[index * 3 + 1] = color.g * 0.82;
+      colors[index * 3 + 2] = color.b * 0.82;
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     const material = new THREE.PointsMaterial({
-      size: 1.15,
+      size: 1.05,
       transparent: true,
-      opacity: 0.23,
+      opacity: 0.2,
       vertexColors: true,
       depthWrite: false,
       blending: THREE.AdditiveBlending,
@@ -410,12 +440,44 @@
     const points = new THREE.Points(geometry, material);
     points.userData.mist = true;
     state.galaxy.add(points);
+
+    const core = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: haloTexture(),
+        color: 0xf7fbff,
+        transparent: true,
+        opacity: 0.08,
+        depthWrite: false,
+        depthTest: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    core.scale.set(180, 180, 1);
+    core.userData.core = true;
+    state.galaxy.add(core);
+
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(112, 114, 160),
+      new THREE.MeshBasicMaterial({
+        color: 0x8cb7ff,
+        transparent: true,
+        opacity: 0.07,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    ring.rotation.x = Math.PI / 2.9;
+    ring.rotation.z = -0.32;
+    ring.userData.coreRing = true;
+    state.galaxy.add(ring);
   }
 
   function createLabel(item) {
     const label = document.createElement("button");
     label.type = "button";
-    label.className = "space-label";
+    label.className = `space-label is-${item.kind}`;
+    label.style.setProperty("--label-color", itemColor(item).getStyle());
     label.textContent = item.name;
     label.dataset.target = item.id;
     label.title = `查看 ${item.name}`;
@@ -515,7 +577,10 @@
       if (child.userData?.follows) {
         const follows = child.userData.follows;
         child.visible = follows.visible;
-        if (child.material) child.material.opacity = follows.material.opacity * 0.34;
+        if (child.material) {
+          const focusRatio = follows.material.opacity / (follows.userData.baseOpacity || 0.9);
+          child.material.opacity = (child.userData.baseOpacity || 0.12) * clampNumber(focusRatio, 0.12, 1.18);
+        }
         if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
       }
     });
@@ -972,6 +1037,13 @@
       if (child.userData?.follows) {
         child.position.copy(child.userData.follows.position);
         if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
+        if (child.userData.starburst && child.material) child.material.rotation += 0.0016;
+      }
+      if (child.userData?.coreRing) {
+        child.rotation.z += 0.00035;
+      }
+      if (child.userData?.mist) {
+        child.rotation.y += 0.00012;
       }
     });
     updateLabels();
@@ -1088,10 +1160,42 @@
     return cachedHalo;
   }
 
+  let cachedStarburst = null;
+  function starburstTexture() {
+    if (cachedStarburst) return cachedStarburst;
+    const canvas = document.createElement("canvas");
+    canvas.width = 192;
+    canvas.height = 192;
+    const context = canvas.getContext("2d");
+    const center = 96;
+    const gradient = context.createRadialGradient(center, center, 0, center, center, 92);
+    gradient.addColorStop(0, "rgba(255,255,255,0.92)");
+    gradient.addColorStop(0.08, "rgba(255,255,255,0.42)");
+    gradient.addColorStop(0.34, "rgba(255,255,255,0.1)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 192, 192);
+    context.strokeStyle = "rgba(255,255,255,0.46)";
+    context.lineWidth = 1;
+    for (let index = 0; index < 12; index += 1) {
+      const angle = (index / 12) * Math.PI * 2;
+      const inner = index % 3 === 0 ? 12 : 22;
+      const outer = index % 3 === 0 ? 92 : 66;
+      context.globalAlpha = index % 3 === 0 ? 0.48 : 0.24;
+      context.beginPath();
+      context.moveTo(center + Math.cos(angle) * inner, center + Math.sin(angle) * inner);
+      context.lineTo(center + Math.cos(angle) * outer, center + Math.sin(angle) * outer);
+      context.stroke();
+    }
+    cachedStarburst = new THREE.CanvasTexture(canvas);
+    return cachedStarburst;
+  }
+
   function initStarfield() {
     const canvas = dom.canvas;
     const context = canvas.getContext("2d");
     let stars = [];
+    let dust = [];
     let meteors = [];
     let ships = [];
     function resize() {
@@ -1101,28 +1205,41 @@
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      stars = Array.from({ length: Math.min(360, Math.floor(window.innerWidth / 4)) }, (_, index) => {
+      stars = Array.from({ length: Math.min(760, Math.floor(window.innerWidth / 2.2)) }, (_, index) => {
         const hash = stableHash(`star-${index}-${window.innerWidth}`);
         return {
           x: hash % window.innerWidth,
           y: (hash >>> 8) % window.innerHeight,
-          r: 0.28 + ((hash >>> 16) % 13) / 14,
-          speed: 0.04 + ((hash >>> 4) % 10) / 180,
+          r: 0.22 + ((hash >>> 16) % 18) / 18,
+          bright: ((hash >>> 20) % 100) > 88,
+          tint: ["238,243,255", "191,216,255", "255,226,186", "197,255,235"][(hash >>> 24) % 4],
+          speed: 0.035 + ((hash >>> 4) % 10) / 210,
           phase: (hash % 628) / 100,
         };
       });
-      meteors = Array.from({ length: 7 }, (_, index) => {
+      dust = Array.from({ length: Math.min(180, Math.floor(window.innerWidth / 7)) }, (_, index) => {
+        const hash = stableHash(`dust-${index}-${window.innerWidth}`);
+        const diagonal = ((hash >>> 7) % 1000) / 1000;
+        return {
+          x: diagonal * window.innerWidth + (((hash >>> 17) % 100) - 50),
+          y: diagonal * window.innerHeight * 0.62 + ((hash >>> 23) % window.innerHeight) * 0.26,
+          r: 0.4 + (hash % 24) / 10,
+          alpha: 0.016 + ((hash >>> 12) % 20) / 1000,
+          tint: ["116,192,252", "121,223,193", "255,143,163"][(hash >>> 20) % 3],
+        };
+      });
+      meteors = Array.from({ length: 9 }, (_, index) => {
         const hash = stableHash(`meteor-${index}-${window.innerWidth}`);
         return {
           delay: (hash % 9000) + index * 1400,
-          duration: 4200 + ((hash >>> 6) % 3600),
+          duration: 3800 + ((hash >>> 6) % 4200),
           startX: (hash % window.innerWidth) - window.innerWidth * 0.25,
           startY: ((hash >>> 9) % Math.max(1, window.innerHeight * 0.46)),
-          length: 120 + ((hash >>> 15) % 120),
-          speed: 0.18 + ((hash >>> 21) % 80) / 260,
+          length: 130 + ((hash >>> 15) % 160),
+          speed: 0.2 + ((hash >>> 21) % 80) / 250,
         };
       });
-      ships = Array.from({ length: 5 }, (_, index) => {
+      ships = Array.from({ length: 4 }, (_, index) => {
         const hash = stableHash(`ship-${index}-${window.innerWidth}`);
         return {
           x: (hash % window.innerWidth),
@@ -1135,12 +1252,34 @@
     }
     function draw(time) {
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      for (const star of stars) {
-        const alpha = 0.18 + Math.sin(time * star.speed * 0.01 + star.phase) * 0.11;
+      context.save();
+      context.globalCompositeOperation = "lighter";
+      for (const particle of dust) {
         context.beginPath();
-        context.fillStyle = `rgba(238, 243, 255, ${alpha})`;
+        context.fillStyle = `rgba(${particle.tint}, ${particle.alpha})`;
+        context.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.restore();
+      for (const star of stars) {
+        const alpha = (star.bright ? 0.34 : 0.16) + Math.sin(time * star.speed * 0.01 + star.phase) * (star.bright ? 0.18 : 0.09);
+        context.beginPath();
+        context.fillStyle = `rgba(${star.tint}, ${alpha})`;
         context.arc(star.x, star.y, star.r, 0, Math.PI * 2);
         context.fill();
+        if (star.bright) {
+          context.save();
+          context.globalAlpha = Math.max(0, alpha * 0.36);
+          context.strokeStyle = `rgba(${star.tint}, 0.5)`;
+          context.lineWidth = 0.7;
+          context.beginPath();
+          context.moveTo(star.x - star.r * 3.4, star.y);
+          context.lineTo(star.x + star.r * 3.4, star.y);
+          context.moveTo(star.x, star.y - star.r * 3.4);
+          context.lineTo(star.x, star.y + star.r * 3.4);
+          context.stroke();
+          context.restore();
+        }
       }
       for (const meteor of meteors) {
         const cycle = meteor.duration + meteor.delay;
@@ -1154,9 +1293,10 @@
         const gradient = context.createLinearGradient(x, y, x - meteor.length, y - meteor.length * 0.34);
         gradient.addColorStop(0, "rgba(255,255,255,0.92)");
         gradient.addColorStop(0.24, "rgba(116,192,252,0.48)");
+        gradient.addColorStop(0.56, "rgba(255,143,163,0.12)");
         gradient.addColorStop(1, "rgba(116,192,252,0)");
         context.strokeStyle = gradient;
-        context.lineWidth = 1.4;
+        context.lineWidth = 1.25;
         context.beginPath();
         context.moveTo(x, y);
         context.lineTo(x - meteor.length, y - meteor.length * 0.34);
