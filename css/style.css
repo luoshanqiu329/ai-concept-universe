@@ -889,22 +889,19 @@ a.model-pill:hover {
 
 .atlas-stage {
   position: absolute;
-  inset: 76px 24px 102px 276px;
+  inset: 0;
   overflow: hidden;
   pointer-events: auto;
-  border: 1px solid rgba(209, 225, 255, 0.12);
-  border-radius: 22px;
+  border: 0;
+  border-radius: 0;
   background:
-    radial-gradient(ellipse at 52% 18%, rgba(255, 224, 102, 0.1), transparent 30%),
-    radial-gradient(ellipse at 50% 50%, rgba(140, 183, 255, 0.16), transparent 42%),
-    radial-gradient(ellipse at 78% 35%, rgba(121, 223, 193, 0.1), transparent 32%),
-    linear-gradient(145deg, rgba(10, 13, 28, 0.34), rgba(3, 4, 10, 0.16));
-  box-shadow:
-    0 34px 110px rgba(0, 0, 0, 0.42),
-    0 0 0 1px rgba(255, 255, 255, 0.025) inset,
-    0 0 80px rgba(116, 192, 252, 0.08) inset;
-  backdrop-filter: blur(10px) saturate(130%);
-  -webkit-backdrop-filter: blur(10px) saturate(130%);
+    radial-gradient(ellipse at 56% 24%, rgba(255, 224, 102, 0.08), transparent 30%),
+    radial-gradient(ellipse at 52% 52%, rgba(140, 183, 255, 0.13), transparent 44%),
+    radial-gradient(ellipse at 82% 36%, rgba(121, 223, 193, 0.08), transparent 34%),
+    linear-gradient(145deg, rgba(10, 13, 28, 0.16), rgba(3, 4, 10, 0.04));
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .atlas-stage::before,
@@ -929,17 +926,17 @@ a.model-pill:hover {
 
 .atlas-stage::after {
   z-index: 3;
-  border-radius: inherit;
+  border-radius: 0;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 24%),
-    radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.62) 100%);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.055), transparent 24%),
+    radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, 0.52) 100%);
   mix-blend-mode: screen;
 }
 
 .atlas-header {
   position: absolute;
-  left: 28px;
-  top: 24px;
+  left: 296px;
+  top: 132px;
   z-index: 7;
   max-width: min(360px, 42vw);
   pointer-events: none;
@@ -962,13 +959,13 @@ a.model-pill:hover {
 
 .atlas-archive-plaque {
   position: absolute;
-  left: 50%;
-  top: 18px;
+  left: 60%;
+  top: 94px;
   z-index: 8;
   display: grid;
   justify-items: center;
-  width: min(380px, 36vw);
-  padding: 12px 18px 13px;
+  width: min(340px, 30vw);
+  padding: 10px 16px 11px;
   border: 1px solid rgba(255, 224, 153, 0.18);
   border-radius: 16px;
   background:
@@ -993,7 +990,7 @@ a.model-pill:hover {
 .atlas-archive-plaque strong {
   margin-top: 3px;
   color: #fff4c2;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
   line-height: 1.05;
   text-shadow: 0 0 26px rgba(255, 224, 102, 0.26);
@@ -1086,8 +1083,8 @@ a.model-pill:hover {
 
 .atlas-city-rail {
   position: absolute;
-  right: 18px;
-  top: 18px;
+  right: 28px;
+  top: 132px;
   z-index: 7;
   display: grid;
   gap: 7px;
@@ -1150,7 +1147,7 @@ a.model-pill:hover {
 .atlas-explore-dock {
   position: absolute;
   left: 50%;
-  bottom: 64px;
+  bottom: 108px;
   z-index: 8;
   display: flex;
   gap: 8px;
@@ -1432,8 +1429,8 @@ a.model-pill:hover {
 
 .atlas-meta {
   position: absolute;
-  right: 20px;
-  bottom: 134px;
+  right: 28px;
+  bottom: 174px;
   z-index: 5;
   display: flex;
   align-items: center;
@@ -1454,8 +1451,8 @@ a.model-pill:hover {
 
 .atlas-legend {
   position: absolute;
-  left: 24px;
-  bottom: 134px;
+  left: 304px;
+  bottom: 174px;
   z-index: 7;
   display: flex;
   flex-wrap: wrap;
@@ -1661,13 +1658,13 @@ a.model-pill:hover {
   }
 
   .atlas-stage {
-    inset: 108px 18px 190px 18px;
-    border-radius: 18px;
+    inset: 0;
+    border-radius: 0;
   }
 
   .atlas-header {
     left: 18px;
-    top: 18px;
+    top: 118px;
     max-width: calc(100vw - 68px);
   }
 
