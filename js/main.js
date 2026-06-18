@@ -1,0 +1,1222 @@
+(() => {
+  "use strict";
+
+  const CATEGORY_CONFIG = {
+    "基座模型": { color: "#6ea8fe", arm: 0 },
+    "微调技术": { color: "#79dfc1", arm: 1 },
+    "推理优化": { color: "#ffe066", arm: 2 },
+    "多模态技术": { color: "#ff8fa3", arm: 3 },
+    "智能体Agent": { color: "#b197fc", arm: 4 },
+    "RAG与检索": { color: "#99e9b0", arm: 5 },
+    "AI安全与对齐": { color: "#ff922b", arm: 6 },
+    "开发框架与工具": { color: "#74c0fc", arm: 7 },
+    "行业应用场景": { color: "#f783ac", arm: 8 },
+    "Agent协议与范式": { color: "#c0eb75", arm: 4 },
+  };
+
+  const TYPE_CONFIG = {
+    concept: { label: "AI概念", color: "#8cb7ff" },
+    company: { label: "顶尖AI公司", color: "#ffffff" },
+    person: { label: "关键人物", color: "#ffd43b" },
+    achievement: { label: "AI成就恒星", color: "#ffe066" },
+  };
+
+  const STORAGE_KEY = "ai-concept-universe:last-seen-version";
+  const CURRENT_YEAR = 2026;
+  const EPOCH_YEAR = 1950;
+  const dom = {
+    stage: document.getElementById("galaxy-stage"),
+    labelLayer: document.getElementById("label-layer"),
+    canvas: document.getElementById("space-canvas"),
+    categoryList: document.getElementById("category-list"),
+    typeList: document.getElementById("type-list"),
+    search: document.getElementById("entity-search"),
+    datalist: document.getElementById("entity-options"),
+    reset: document.getElementById("reset-view"),
+    export: document.getElementById("export-png"),
+    updateBadge: document.getElementById("update-badge"),
+    timeline: document.getElementById("timeline-slider"),
+    chronicleYear: document.getElementById("chronicle-year"),
+    chronicleEvent: document.getElementById("chronicle-event"),
+    sliceYear: document.getElementById("slice-year"),
+    sliceCount: document.getElementById("slice-count"),
+    infoCard: document.getElementById("info-card"),
+    closeCard: document.getElementById("close-card"),
+    portraitWrap: document.getElementById("portrait-wrap"),
+    cardPortrait: document.getElementById("card-portrait"),
+    cardSwatch: document.getElementById("card-swatch"),
+    cardKind: document.getElementById("card-kind"),
+    cardTitle: document.getElementById("card-title"),
+    cardDefinition: document.getElementById("card-definition"),
+    cardMetrics: document.getElementById("card-metrics"),
+    modelSection: document.getElementById("model-section"),
+    cardModels: document.getElementById("card-models"),
+    peopleSection: document.getElementById("people-section"),
+    cardPeople: document.getElementById("card-people"),
+    cardRelations: document.getElementById("card-relations"),
+    cardLinks: document.getElementById("card-links"),
+  };
+
+  const state = {
+    payload: null,
+    items: [],
+    itemById: new Map(),
+    links: [],
+    chronology: [],
+    activeCategories: new Set(Object.keys(CATEGORY_CONFIG)),
+    activeTypes: new Set(Object.keys(TYPE_CONFIG)),
+    selectedYear: CURRENT_YEAR,
+    hoveredId: null,
+    selectedId: null,
+    searchHitId: null,
+    scene: null,
+    camera: null,
+    renderer: null,
+    controls: null,
+    raycaster: null,
+    pointer: new THREE.Vector2(),
+    galaxy: null,
+    meshes: new Map(),
+    labels: new Map(),
+    linkObjects: [],
+    portraitCache: new Map(),
+    width: window.innerWidth,
+    height: window.innerHeight,
+  };
+
+  async function start() {
+    if (!window.THREE) {
+      dom.stage.innerHTML = '<div class="fallback-error">Three.js 加载失败，请检查网络连接。</div>';
+      return;
+    }
+
+    if (window.lucide) window.lucide.createIcons();
+    initStarfield();
+    setupThree();
+    bindEvents();
+    const payload = await loadUniverseData();
+    normalizePayload(payload);
+    buildControls();
+    buildGalaxy();
+    updateTimelineRange();
+    applyFilters();
+    setupUpdateBadge();
+    animate();
+  }
+
+  async function loadUniverseData() {
+    const embedded = readEmbeddedPayload();
+    if (window.location.protocol !== "file:") {
+      try {
+        const response = await fetch(`data/concepts.json?v=${Date.now()}`, { cache: "no-store" });
+        if (response.ok) return response.json();
+      } catch (error) {
+        console.warn("Falling back to embedded data.", error);
+      }
+    }
+    return embedded;
+  }
+
+  function readEmbeddedPayload() {
+    try {
+      return JSON.parse(document.getElementById("embedded-concepts").textContent);
+    } catch (error) {
+      console.error("Embedded concept data is invalid.", error);
+      return { meta: {}, concepts: [], companies: [], people: [], achievements: [], chronology: [] };
+    }
+  }
+
+  function normalizePayload(payload) {
+    state.payload = payload;
+    const concepts = (payload.concepts || []).map((item) => normalizeItem(item, "concept"));
+    const companies = (payload.companies || []).map((item) => normalizeItem(item, "company"));
+    const people = (payload.people || []).map((item) => normalizeItem(item, "person"));
+    const achievements = (payload.achievements || []).map((item) => normalizeItem(item, "achievement"));
+    state.items = [...concepts, ...companies, ...people, ...achievements].map((item, index) => ({
+      ...item,
+      index,
+      year: parseYear(item.first_appear || item.founded || item.active_since || item.date || CURRENT_YEAR),
+    }));
+    state.itemById = new Map(state.items.map((item) => [item.id, item]));
+    state.links = buildLinks();
+    state.chronology = (payload.chronology || []).slice().sort((a, b) => Number(a.year) - Number(b.year));
+  }
+
+  function normalizeItem(item, kind) {
+    const normalized = {
+      ...item,
+      kind: item.kind || kind,
+      heat: Number(item.heat || (kind === "company" ? 92 : kind === "person" ? 72 : 50)),
+      category: item.category || (kind === "company" ? "顶尖AI公司" : kind === "person" ? "关键人物" : "基座模型"),
+      references: item.references || item.links || [],
+      relations: item.relations || [],
+    };
+    normalized.position = item.position || galaxyPosition(normalized);
+    return normalized;
+  }
+
+  function buildLinks() {
+    const links = [];
+    const pushLink = (sourceId, targetId, type = "related") => {
+      const source = state.itemById.get(sourceId);
+      const target = state.itemById.get(targetId);
+      if (!source || !target || sourceId === targetId) return;
+      const id = `${sourceId}->${targetId}:${type}`;
+      if (links.some((link) => link.id === id)) return;
+      links.push({ id, source, target, sourceId, targetId, type });
+    };
+
+    state.items.forEach((item) => {
+      (item.relations || []).forEach((relation) => pushLink(item.id, relation.target, relation.type));
+      (item.related || []).forEach((target) => pushLink(item.id, target, "related"));
+      (item.people || []).forEach((target) => pushLink(item.id, target, "person"));
+      (item.concepts || []).forEach((target) => pushLink(item.id, target, "concept"));
+      (item.companies || []).forEach((target) => pushLink(item.id, target, "company"));
+      (item.models || []).forEach((model) => (model.related || []).forEach((target) => pushLink(item.id, target, "model")));
+    });
+
+    return links;
+  }
+
+  function setupThree() {
+    state.width = dom.stage.clientWidth || window.innerWidth;
+    state.height = dom.stage.clientHeight || window.innerHeight;
+    state.scene = new THREE.Scene();
+    state.scene.fog = new THREE.FogExp2(0x07070d, 0.0017);
+    state.camera = new THREE.PerspectiveCamera(52, state.width / state.height, 0.1, 5000);
+    state.camera.position.set(0, 175, 440);
+
+    state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    state.renderer.setSize(state.width, state.height);
+    state.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    dom.stage.prepend(state.renderer.domElement);
+
+    state.controls = createGalaxyControls(state.camera, state.renderer.domElement);
+
+    state.raycaster = new THREE.Raycaster();
+    state.galaxy = new THREE.Group();
+    state.scene.add(state.galaxy);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 1.2);
+    state.scene.add(ambient);
+    const coreLight = new THREE.PointLight(0x8cb7ff, 1.7, 650);
+    coreLight.position.set(0, 80, 120);
+    state.scene.add(coreLight);
+    addGalaxyMist();
+  }
+
+  function bindEvents() {
+    window.addEventListener("resize", debounce(handleResize, 120));
+    state.pointer = new THREE.Vector2();
+    dom.stage.addEventListener("pointermove", handlePointerMove);
+    dom.stage.addEventListener("click", handleClick);
+    dom.stage.addEventListener("pointerleave", () => setHovered(null));
+    dom.reset.addEventListener("click", resetView);
+    dom.export.addEventListener("click", exportPng);
+    dom.closeCard.addEventListener("click", closeInfoCard);
+    dom.cardRelations.addEventListener("click", handleRelatedClick);
+    dom.cardPeople.addEventListener("click", handleRelatedClick);
+    dom.timeline.addEventListener("input", handleTimelineChange);
+    dom.search.addEventListener("input", debounce(handleSearchInput, 160));
+    dom.search.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") handleSearchInput();
+    });
+  }
+
+  function buildControls() {
+    buildTypeControls();
+    buildCategoryControls();
+    buildSearchOptions();
+  }
+
+  function buildTypeControls() {
+    const counts = countBy(state.items, (item) => item.kind);
+    dom.typeList.innerHTML = "";
+    Object.entries(TYPE_CONFIG).forEach(([type, config]) => {
+      const label = document.createElement("label");
+      label.className = "type-item";
+      label.style.setProperty("--item-color", config.color);
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = state.activeTypes.has(type);
+      input.addEventListener("change", () => {
+        if (input.checked) state.activeTypes.add(type);
+        else state.activeTypes.delete(type);
+        applyFilters();
+      });
+      label.innerHTML = `<span>${escapeHtml(config.label)}</span><span class="type-count">${counts.get(type) || 0}</span>`;
+      label.prepend(input);
+      dom.typeList.appendChild(label);
+    });
+  }
+
+  function buildCategoryControls() {
+    const concepts = state.items.filter((item) => item.kind === "concept");
+    const counts = countBy(concepts, (item) => item.category);
+    dom.categoryList.innerHTML = "";
+    Object.entries(CATEGORY_CONFIG).forEach(([category, config]) => {
+      const label = document.createElement("label");
+      label.className = "category-item";
+      label.style.setProperty("--item-color", config.color);
+      const input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = state.activeCategories.has(category);
+      input.addEventListener("change", () => {
+        if (input.checked) state.activeCategories.add(category);
+        else state.activeCategories.delete(category);
+        applyFilters();
+      });
+      const swatch = document.createElement("span");
+      swatch.className = "category-swatch";
+      const name = document.createElement("span");
+      name.textContent = category;
+      const count = document.createElement("span");
+      count.className = "category-count";
+      count.textContent = counts.get(category) || 0;
+      label.append(input, swatch, name, count);
+      dom.categoryList.appendChild(label);
+    });
+  }
+
+  function buildSearchOptions() {
+    dom.datalist.innerHTML = state.items
+      .slice()
+      .sort((a, b) => b.heat - a.heat || a.name.localeCompare(b.name))
+      .flatMap((item) => [item.name, item.nativeName, ...(item.aliases || [])].filter(Boolean))
+      .map((name) => `<option value="${escapeHtml(name)}"></option>`)
+      .join("");
+  }
+
+  function buildGalaxy() {
+    clearGroup(state.galaxy);
+    state.meshes.clear();
+    state.labels.clear();
+    state.linkObjects = [];
+    addGalaxyMist();
+    addRelationLines();
+    addItemMeshes();
+  }
+
+  function addItemMeshes() {
+    const sphere = new THREE.SphereGeometry(1, 24, 18);
+    state.items.forEach((item) => {
+      const color = itemColor(item);
+      const size = nodeSize(item);
+      const material = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.92,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(sphere, material);
+      mesh.scale.setScalar(size);
+      mesh.position.set(item.position.x, item.position.y, item.position.z);
+      mesh.userData.itemId = item.id;
+      mesh.userData.baseScale = size;
+      mesh.userData.baseOpacity = 0.92;
+      state.galaxy.add(mesh);
+
+      const halo = new THREE.Sprite(
+        new THREE.SpriteMaterial({
+          map: haloTexture(),
+          color,
+          transparent: true,
+          opacity: item.kind === "company" ? 0.18 : item.kind === "person" ? 0.18 : 0.14,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })
+      );
+      halo.scale.setScalar(size * (item.kind === "company" ? 5.2 : 4.8));
+      halo.position.copy(mesh.position);
+      halo.userData.follows = mesh;
+      state.galaxy.add(halo);
+
+      if (item.kind !== "concept") {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(size * 1.7, size * 1.92, 48),
+          new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0.48,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          })
+        );
+        ring.position.copy(mesh.position);
+        ring.lookAt(state.camera.position);
+        ring.userData.follows = mesh;
+        state.galaxy.add(ring);
+      }
+
+      state.meshes.set(item.id, mesh);
+      createLabel(item);
+    });
+  }
+
+  function addRelationLines() {
+    state.links.forEach((link) => {
+      const start = new THREE.Vector3(link.source.position.x, link.source.position.y, link.source.position.z);
+      const end = new THREE.Vector3(link.target.position.x, link.target.position.y, link.target.position.z);
+      const mid = start.clone().add(end).multiplyScalar(0.5);
+      mid.multiplyScalar(0.76);
+      mid.y += 18 + (stableHash(link.id) % 26);
+      const curve = new THREE.CatmullRomCurve3([start, mid, end]);
+      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(18));
+      const material = new THREE.LineBasicMaterial({
+        color: relationColor(link),
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const line = new THREE.Line(geometry, material);
+      line.userData.link = link;
+      state.galaxy.add(line);
+      state.linkObjects.push(line);
+    });
+  }
+
+  function addGalaxyMist() {
+    const count = 1600;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const color = new THREE.Color();
+    for (let index = 0; index < count; index += 1) {
+      const hash = stableHash(`mist-${index}`);
+      const arm = hash % 9;
+      const radius = 34 + ((hash >>> 3) % 360);
+      const angle = (arm / 9) * Math.PI * 2 + radius * 0.011 + (((hash >>> 12) % 100) / 100 - 0.5) * 0.52;
+      const y = (((hash >>> 22) % 100) / 100 - 0.5) * 86;
+      positions[index * 3] = Math.cos(angle) * radius;
+      positions[index * 3 + 1] = y;
+      positions[index * 3 + 2] = Math.sin(angle) * radius;
+      color.set(CATEGORY_CONFIG[Object.keys(CATEGORY_CONFIG)[arm]]?.color || "#8cb7ff");
+      colors[index * 3] = color.r * 0.7;
+      colors[index * 3 + 1] = color.g * 0.7;
+      colors[index * 3 + 2] = color.b * 0.7;
+    }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    const material = new THREE.PointsMaterial({
+      size: 1.15,
+      transparent: true,
+      opacity: 0.23,
+      vertexColors: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.userData.mist = true;
+    state.galaxy.add(points);
+  }
+
+  function createLabel(item) {
+    const label = document.createElement("button");
+    label.type = "button";
+    label.className = "space-label";
+    label.textContent = item.name;
+    label.dataset.target = item.id;
+    label.title = `查看 ${item.name}`;
+    label.addEventListener("pointerdown", (event) => event.stopPropagation());
+    label.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const next = state.itemById.get(item.id);
+      if (!next) return;
+      activateItem(next);
+    });
+    dom.labelLayer.appendChild(label);
+    state.labels.set(item.id, label);
+  }
+
+  function updateLabels() {
+    const halfW = state.width / 2;
+    const halfH = state.height / 2;
+    const vector = new THREE.Vector3();
+    const candidates = [];
+    state.items.forEach((item) => {
+      const label = state.labels.get(item.id);
+      const mesh = state.meshes.get(item.id);
+      if (!label || !mesh || !mesh.visible) {
+        if (label) label.classList.remove("is-visible", "is-focus");
+        return;
+      }
+      const focus = item.id === state.hoveredId || item.id === state.selectedId || item.id === state.searchHitId;
+      vector.copy(mesh.position).project(state.camera);
+      const isBehind = vector.z > 1;
+      if (isBehind) {
+        label.classList.remove("is-visible", "is-focus");
+        return;
+      }
+      const x = vector.x * halfW + halfW;
+      const y = -vector.y * halfH + halfH;
+      const width = label.offsetWidth || Math.min(180, item.name.length * 7 + 14);
+      const height = label.offsetHeight || 20;
+      candidates.push({
+        item,
+        label,
+        focus,
+        x,
+        y,
+        priority: labelPriority(item, focus),
+        rect: {
+          left: x - width / 2,
+          right: x + width / 2,
+          top: y - height / 2,
+          bottom: y + height / 2,
+        },
+      });
+    });
+
+    const placed = [];
+    candidates
+      .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
+      .forEach((candidate) => {
+        const { item, label, focus, rect, x, y } = candidate;
+        const insideViewport = rect.right >= 0 && rect.left <= state.width && rect.bottom >= 0 && rect.top <= state.height;
+        const overlaps = !focus && placed.some((placedLabel) => rectsOverlap(rect, placedLabel.rect, 6));
+        const visible = insideViewport && (!overlaps || focus);
+        label.style.left = `${x}px`;
+        label.style.top = `${y}px`;
+        label.style.zIndex = String(focus ? 1000 : Math.round(candidate.priority));
+        label.classList.toggle("is-visible", visible);
+        label.classList.toggle("is-focus", focus);
+        if (visible) placed.push(candidate);
+      });
+  }
+
+  function labelPriority(item, focus) {
+    if (focus) return 10000;
+    const kindBoost = { company: 420, person: 360, achievement: 300, concept: 0 }[item.kind] || 0;
+    return kindBoost + Number(item.heat || 0);
+  }
+
+  function rectsOverlap(a, b, padding = 0) {
+    return !(a.right + padding < b.left || a.left - padding > b.right || a.bottom + padding < b.top || a.top - padding > b.bottom);
+  }
+
+  function applyFilters() {
+    let visibleCount = 0;
+    const focusRelated = relatedIds(state.hoveredId || state.selectedId || state.searchHitId);
+    state.items.forEach((item) => {
+      const mesh = state.meshes.get(item.id);
+      if (!mesh) return;
+      const visible = isItemVisible(item);
+      visibleCount += visible ? 1 : 0;
+      const focused = focusRelated.size ? focusRelated.has(item.id) : true;
+      mesh.visible = visible;
+      mesh.material.opacity = visible ? (focused ? 0.94 : 0.16) : 0;
+      const scale = mesh.userData.baseScale * (item.id === state.hoveredId || item.id === state.searchHitId ? 1.36 : 1);
+      mesh.scale.setScalar(scale);
+    });
+
+    state.galaxy.children.forEach((child) => {
+      if (child.userData?.follows) {
+        const follows = child.userData.follows;
+        child.visible = follows.visible;
+        if (child.material) child.material.opacity = follows.material.opacity * 0.34;
+        if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
+      }
+    });
+
+    state.linkObjects.forEach((line) => {
+      const link = line.userData.link;
+      const visible = isItemVisible(link.source) && isItemVisible(link.target);
+      const highlighted = focusRelated.has(link.sourceId) && focusRelated.has(link.targetId) && focusRelated.size > 0;
+      line.visible = visible;
+      line.material.opacity = visible ? (highlighted ? 0.62 : focusRelated.size ? 0.025 : 0.12) : 0;
+    });
+
+    dom.sliceYear.textContent = String(state.selectedYear);
+    dom.sliceCount.textContent = `${visibleCount} nodes`;
+    updateChronicle();
+    updateLabels();
+  }
+
+  function isItemVisible(item) {
+    if (item.year > state.selectedYear) return false;
+    if (!state.activeTypes.has(item.kind)) return false;
+    if (item.kind === "concept" && !state.activeCategories.has(item.category)) return false;
+    return true;
+  }
+
+  function relatedIds(focusId) {
+    const set = new Set();
+    if (!focusId) return set;
+    set.add(focusId);
+    state.links.forEach((link) => {
+      if (link.sourceId === focusId || link.targetId === focusId) {
+        set.add(link.sourceId);
+        set.add(link.targetId);
+      }
+    });
+    return set;
+  }
+
+  function handlePointerMove(event) {
+    const rect = state.renderer.domElement.getBoundingClientRect();
+    state.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    state.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    state.raycaster.setFromCamera(state.pointer, state.camera);
+    const intersections = state.raycaster.intersectObjects(Array.from(state.meshes.values()).filter((mesh) => mesh.visible), false);
+    const itemId = intersections[0]?.object?.userData?.itemId || null;
+    setHovered(itemId);
+  }
+
+  function handleClick() {
+    if (!state.hoveredId) return;
+    const item = state.itemById.get(state.hoveredId);
+    if (!item) return;
+    openInfoCard(item);
+  }
+
+  function setHovered(itemId) {
+    if (state.hoveredId === itemId) return;
+    state.hoveredId = itemId;
+    applyFilters();
+  }
+
+  function handleTimelineChange() {
+    state.selectedYear = Number(dom.timeline.value);
+    applyFilters();
+  }
+
+  function updateTimelineRange() {
+    const years = [
+      EPOCH_YEAR,
+      CURRENT_YEAR,
+      ...state.items.map((item) => item.year),
+      ...state.chronology.map((event) => Number(event.year)),
+    ].filter(Boolean);
+    const min = Math.min(...years);
+    const max = Math.max(...years, CURRENT_YEAR);
+    dom.timeline.min = String(min);
+    dom.timeline.max = String(max);
+    dom.timeline.value = String(max);
+    state.selectedYear = max;
+  }
+
+  function updateChronicle() {
+    dom.chronicleYear.textContent = String(state.selectedYear);
+    const events = state.chronology.filter((event) => Number(event.year) <= state.selectedYear);
+    const latest = events[events.length - 1];
+    dom.chronicleEvent.textContent = latest
+      ? `${latest.year} · ${latest.title}：${latest.summary}`
+      : "拖动时间，查看概念、公司和人物如何逐步出现。";
+  }
+
+  function handleSearchInput() {
+    const query = dom.search.value.trim().toLowerCase();
+    if (!query) {
+      state.searchHitId = null;
+      applyFilters();
+      return;
+    }
+    const exact = state.items.find((item) => item.name.toLowerCase() === query || item.id.toLowerCase() === query || (item.aliases || []).some((alias) => String(alias).toLowerCase() === query));
+    const fuzzy = state.items.find((item) => searchableText(item).includes(query) || (item.aliases || []).some((alias) => query.includes(String(alias).toLowerCase())));
+    const item = exact || fuzzy;
+    if (!item) return;
+    if (item.year > state.selectedYear) {
+      state.selectedYear = item.year;
+      dom.timeline.value = String(item.year);
+    }
+    state.activeTypes.add(item.kind);
+    if (item.kind === "concept") state.activeCategories.add(item.category);
+    buildControls();
+    state.searchHitId = item.id;
+    applyFilters();
+    focusOnItem(item);
+    openInfoCard(item);
+  }
+
+  function openInfoCard(item) {
+    state.selectedId = item.id;
+    dom.infoCard.hidden = false;
+    const color = itemColor(item);
+    dom.cardSwatch.style.background = color.getStyle();
+    dom.cardSwatch.style.boxShadow = `0 0 18px ${color.getStyle()}`;
+    dom.cardKind.textContent = `${TYPE_CONFIG[item.kind]?.label || item.kind}${item.kind === "concept" ? ` · ${item.category}` : ""}`;
+    dom.cardTitle.textContent = item.name;
+    dom.cardDefinition.textContent = item.definition || item.description || "";
+    renderPortrait(item);
+    renderMetrics(item);
+    renderModels(item);
+    renderPeople(item);
+    renderRelations(item);
+    renderReferences(item);
+    applyFilters();
+  }
+
+  function closeInfoCard() {
+    state.selectedId = null;
+    dom.infoCard.hidden = true;
+    applyFilters();
+  }
+
+  function renderPortrait(item) {
+    dom.cardPortrait.onerror = () => {
+      if (state.selectedId === item.id && item.kind === "person") showGeneratedAvatar(item);
+    };
+    const portrait = item.portrait || item.logo;
+    if (portrait) {
+      dom.cardPortrait.src = portrait;
+      dom.cardPortrait.alt = `${item.name} 肖像`;
+      dom.portraitWrap.hidden = false;
+    } else if (item.portraitPage) {
+      showGeneratedAvatar(item);
+      loadPortrait(item).then((source) => {
+        if (state.selectedId !== item.id || !source) return;
+        dom.cardPortrait.src = source;
+        dom.cardPortrait.alt = `${item.name} 肖像`;
+        dom.portraitWrap.hidden = false;
+      });
+    } else if (item.kind === "person") {
+      showGeneratedAvatar(item);
+    } else {
+      dom.portraitWrap.hidden = true;
+      dom.cardPortrait.removeAttribute("src");
+    }
+  }
+
+  function showGeneratedAvatar(item) {
+    dom.cardPortrait.src = generatedAvatar(item);
+    dom.cardPortrait.alt = `${item.name} 头像`;
+    dom.portraitWrap.hidden = false;
+  }
+
+  function generatedAvatar(item) {
+    const canvas = document.createElement("canvas");
+    canvas.width = 160;
+    canvas.height = 160;
+    const context = canvas.getContext("2d");
+    const color = itemColor(item).getStyle();
+    const gradient = context.createRadialGradient(58, 46, 6, 80, 80, 88);
+    gradient.addColorStop(0, "rgba(255,255,255,0.88)");
+    gradient.addColorStop(0.22, color);
+    gradient.addColorStop(1, "rgba(14,17,31,1)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 160, 160);
+    context.strokeStyle = "rgba(255,255,255,0.36)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.arc(80, 80, 66, 0, Math.PI * 2);
+    context.stroke();
+    const initials = item.name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase();
+    context.fillStyle = "rgba(255,255,255,0.94)";
+    context.font = "700 42px Inter, Arial, sans-serif";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText(initials, 80, 82);
+    return canvas.toDataURL("image/png");
+  }
+
+  async function loadPortrait(item) {
+    if (state.portraitCache.has(item.id)) return state.portraitCache.get(item.id);
+    try {
+      const page = encodeURIComponent(item.portraitPage);
+      const response = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${page}`, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`portrait ${response.status}`);
+      const data = await response.json();
+      const source = data.thumbnail?.source || data.originalimage?.source || "";
+      state.portraitCache.set(item.id, source);
+      return source;
+    } catch (error) {
+      state.portraitCache.set(item.id, "");
+      return "";
+    }
+  }
+
+  function renderMetrics(item) {
+    const rows = [];
+    if (item.kind === "concept") {
+      rows.push(["出现时间", item.first_appear || "-"]);
+      rows.push(["热度", Math.round(item.heat)]);
+      rows.push(["来源/提出者", item.origin || "研究与产业共同演化"]);
+      rows.push(["成熟度", item.maturity || "持续演进"]);
+    } else if (item.kind === "company") {
+      rows.push(["估值/市值", item.valuation || item.market_cap || "未披露"]);
+      rows.push(["总部", item.headquarters || "-"]);
+      rows.push(["人数", item.employees || "未披露"]);
+      rows.push(["代表模型", (item.models || []).map((model) => model.name).slice(0, 2).join(" / ") || "-"]);
+      rows.push(["数据口径", item.valuation_basis || "公开报道估算，非实时数据"]);
+    } else if (item.kind === "achievement") {
+      rows.push(["发生年份", item.first_appear || item.year || "-"]);
+      rows.push(["关联概念", (item.concepts || []).map(nameForId).filter(Boolean).slice(0, 2).join(" / ") || "-"]);
+      rows.push(["星体类型", "关键AI成就恒星"]);
+      rows.push(["影响", item.impact || "推动 AI 范式演化"]);
+    } else {
+      rows.push(["关键角色", item.role || "-"]);
+      rows.push(["代表贡献", item.contribution || "-"]);
+      rows.push(["关联概念", (item.concepts || []).map(nameForId).filter(Boolean).slice(0, 2).join(" / ") || "-"]);
+      rows.push(["活跃时期", item.active_since || item.first_appear || "-"]);
+    }
+    dom.cardMetrics.innerHTML = rows
+      .map(([label, value]) => `<div><dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd></div>`)
+      .join("");
+  }
+
+  function renderModels(item) {
+    const models = item.models || [];
+    dom.modelSection.hidden = !models.length;
+    dom.cardModels.innerHTML = models
+      .map((model) => {
+        const content = `<strong>${escapeHtml(model.name)}</strong> · ${escapeHtml(model.release || "时间未披露")}<br>${escapeHtml(model.capability || "")}`;
+        if (!model.url) return `<span class="model-pill">${content}</span>`;
+        return `<a class="model-pill" href="${escapeHtml(model.url)}" target="_blank" rel="noreferrer">${content}</a>`;
+      })
+      .join("");
+  }
+
+  function renderPeople(item) {
+    const people = (item.people || item.key_people || []).map((id) => ({ id, name: state.itemById.get(id)?.name || id }));
+    dom.peopleSection.hidden = !people.length;
+    dom.cardPeople.innerHTML = people.map((person) => clickableChip(person.id, person.name)).join("");
+  }
+
+  function renderRelations(item) {
+    const seen = new Set();
+    const related = state.links
+      .filter((link) => link.sourceId === item.id || link.targetId === item.id)
+      .map((link) => {
+        const peer = link.sourceId === item.id ? link.target : link.source;
+        if (seen.has(peer.id)) return "";
+        seen.add(peer.id);
+        return clickableChip(peer.id, peer.name);
+      })
+      .filter(Boolean)
+      .slice(0, 14);
+    dom.cardRelations.innerHTML = related.length ? related.join("") : '<span class="relation-chip">暂无关联</span>';
+  }
+
+  function clickableChip(id, label) {
+    return `<button class="relation-chip" type="button" data-target="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
+  }
+
+  function handleRelatedClick(event) {
+    const chip = event.target.closest("[data-target]");
+    if (!chip) return;
+    const item = state.itemById.get(chip.dataset.target);
+    if (!item) return;
+    activateItem(item);
+  }
+
+  function activateItem(item) {
+    if (item.year > state.selectedYear) {
+      state.selectedYear = item.year;
+      dom.timeline.value = String(item.year);
+    }
+    state.activeTypes.add(item.kind);
+    if (item.kind === "concept") state.activeCategories.add(item.category);
+    buildControls();
+    state.searchHitId = item.id;
+    openInfoCard(item);
+    focusOnItem(item);
+    applyFilters();
+  }
+
+  function renderReferences(item) {
+    const references = item.references || [];
+    dom.cardLinks.innerHTML = references
+      .map((reference) => `<a href="${reference.url}" target="_blank" rel="noreferrer">${escapeHtml(reference.label)}</a>`)
+      .join("");
+  }
+
+  function focusOnItem(item) {
+    const position = new THREE.Vector3(item.position.x, item.position.y, item.position.z);
+    const direction = position.clone().normalize().multiplyScalar(115);
+    const targetCamera = position.clone().add(new THREE.Vector3(direction.x || 95, 76, direction.z || 160));
+    animateCamera(targetCamera, position, 850);
+  }
+
+  function resetView() {
+    state.searchHitId = null;
+    dom.search.value = "";
+    animateCamera(new THREE.Vector3(0, 175, 440), new THREE.Vector3(0, 0, 0), 780);
+    applyFilters();
+  }
+
+  function animateCamera(cameraTarget, controlsTarget, duration) {
+    const startCamera = state.camera.position.clone();
+    const startTarget = state.controls.target.clone();
+    const start = performance.now();
+    state.controls.enabled = false;
+    function tick(now) {
+      const t = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - t, 3);
+      state.camera.position.lerpVectors(startCamera, cameraTarget, eased);
+      state.controls.target.lerpVectors(startTarget, controlsTarget, eased);
+      state.camera.lookAt(state.controls.target);
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        state.controls.syncFromCamera();
+        state.controls.enabled = true;
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function handleResize() {
+    state.width = dom.stage.clientWidth || window.innerWidth;
+    state.height = dom.stage.clientHeight || window.innerHeight;
+    state.camera.aspect = state.width / state.height;
+    state.camera.updateProjectionMatrix();
+    state.renderer.setSize(state.width, state.height);
+  }
+
+  function exportPng() {
+    const link = document.createElement("a");
+    link.download = `ai-concept-universe-3d-${state.selectedYear}.png`;
+    link.href = state.renderer.domElement.toDataURL("image/png");
+    link.click();
+  }
+
+  function createGalaxyControls(camera, element) {
+    const target = new THREE.Vector3(0, 0, 0);
+    const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
+    const goal = { radius: spherical.radius, theta: spherical.theta, phi: spherical.phi };
+    const current = { ...goal };
+    const pointerStart = { x: 0, y: 0 };
+    let dragging = false;
+    let mode = "rotate";
+    const controls = {
+      target,
+      enabled: true,
+      minDistance: 90,
+      maxDistance: 860,
+      update,
+      syncFromCamera,
+    };
+
+    element.addEventListener("contextmenu", (event) => event.preventDefault());
+    element.addEventListener("pointerdown", (event) => {
+      if (!controls.enabled) return;
+      dragging = true;
+      mode = event.button === 2 || event.shiftKey || event.metaKey ? "pan" : "rotate";
+      pointerStart.x = event.clientX;
+      pointerStart.y = event.clientY;
+      element.setPointerCapture?.(event.pointerId);
+    });
+    element.addEventListener("pointermove", (event) => {
+      if (!dragging || !controls.enabled) return;
+      const dx = event.clientX - pointerStart.x;
+      const dy = event.clientY - pointerStart.y;
+      pointerStart.x = event.clientX;
+      pointerStart.y = event.clientY;
+      if (mode === "rotate") {
+        goal.theta -= dx * 0.006;
+        goal.phi = clampNumber(goal.phi - dy * 0.0048, 0.22, Math.PI - 0.22);
+      } else {
+        const distanceScale = goal.radius / 420;
+        const right = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 0).multiplyScalar(-dx * distanceScale * 0.62);
+        const up = new THREE.Vector3().setFromMatrixColumn(camera.matrix, 1).multiplyScalar(dy * distanceScale * 0.62);
+        target.add(right).add(up);
+      }
+    });
+    element.addEventListener("pointerup", (event) => {
+      dragging = false;
+      element.releasePointerCapture?.(event.pointerId);
+    });
+    element.addEventListener("wheel", (event) => {
+      if (!controls.enabled) return;
+      event.preventDefault();
+      const factor = Math.exp(event.deltaY * 0.0011);
+      goal.radius = clampNumber(goal.radius * factor, controls.minDistance, controls.maxDistance);
+    }, { passive: false });
+
+    function update() {
+      current.radius += (goal.radius - current.radius) * 0.09;
+      current.theta += (goal.theta - current.theta) * 0.09;
+      current.phi += (goal.phi - current.phi) * 0.09;
+      const next = new THREE.Vector3().setFromSphericalCoords(current.radius, current.phi, current.theta).add(target);
+      camera.position.copy(next);
+      camera.lookAt(target);
+    }
+
+    function syncFromCamera() {
+      const synced = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
+      goal.radius = current.radius = synced.radius;
+      goal.theta = current.theta = synced.theta;
+      goal.phi = current.phi = synced.phi;
+    }
+
+    return controls;
+  }
+
+  function setupUpdateBadge() {
+    const currentVersion = state.payload?.meta?.currentVersion;
+    if (!currentVersion) return;
+    const seenVersion = localStorage.getItem(STORAGE_KEY);
+    if (seenVersion !== currentVersion) {
+      dom.updateBadge.hidden = false;
+      dom.updateBadge.querySelector("span").textContent = `有新内容 · ${currentVersion}`;
+    }
+    dom.updateBadge.addEventListener("click", () => {
+      localStorage.setItem(STORAGE_KEY, currentVersion);
+      dom.updateBadge.hidden = true;
+    });
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    state.galaxy.rotation.y += 0.00058;
+    state.controls.update();
+    state.galaxy.children.forEach((child) => {
+      if (child.userData?.follows) {
+        child.position.copy(child.userData.follows.position);
+        if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
+      }
+    });
+    updateLabels();
+    state.renderer.render(state.scene, state.camera);
+  }
+
+  function itemColor(item) {
+    if (item.kind === "company") return new THREE.Color(item.color || "#ffffff");
+    if (item.kind === "person") return new THREE.Color(item.color || "#ffd43b");
+    if (item.kind === "achievement") return new THREE.Color(item.color || "#ffe066");
+    return new THREE.Color(CATEGORY_CONFIG[item.category]?.color || "#8cb7ff");
+  }
+
+  function nodeSize(item) {
+    const heat = Math.max(0, Math.min(100, item.heat || 50));
+    if (item.kind === "company") return 3.7 + heat / 38;
+    if (item.kind === "person") return 2.2 + heat / 58;
+    if (item.kind === "achievement") return 4.8 + heat / 44;
+    return 1.45 + heat / 62;
+  }
+
+  function relationColor(link) {
+    if (link.type === "person") return 0xffd43b;
+    if (link.type === "model") return 0xffffff;
+    if (link.type === "optimizes") return 0x79dfc1;
+    if (link.type === "applies") return 0xff8fa3;
+    return 0x9bbcff;
+  }
+
+  function galaxyPosition(item) {
+    const year = parseYear(item.first_appear || item.founded || item.active_since || CURRENT_YEAR);
+    const category = CATEGORY_CONFIG[item.category] || CATEGORY_CONFIG["基座模型"];
+    const hash = stableHash(item.id || item.name);
+    const ageFactor = Math.max(0, Math.min(1, (year - EPOCH_YEAR) / (CURRENT_YEAR - EPOCH_YEAR)));
+    const baseRadius = item.kind === "person" ? 260 : item.kind === "company" ? 310 : item.kind === "achievement" ? 78 + ageFactor * 260 : 52 + ageFactor * 300;
+    const arm = item.kind === "company" ? 9.3 : item.kind === "person" ? 10.8 : item.kind === "achievement" ? 1.6 : category.arm;
+    const angle = (arm / 11) * Math.PI * 2 + ageFactor * 5.8 + (((hash >>> 4) % 100) / 100 - 0.5) * 0.72;
+    const verticalSpread = item.kind === "company" ? 96 : item.kind === "person" ? 120 : 82;
+    const y = (((hash >>> 17) % 100) / 100 - 0.5) * verticalSpread + (item.kind === "company" ? 38 : item.kind === "person" ? -36 : item.kind === "achievement" ? 74 : 0);
+    const radius = baseRadius + ((hash % 100) / 100 - 0.5) * 74;
+    return {
+      x: Number((Math.cos(angle) * radius).toFixed(2)),
+      y: Number(y.toFixed(2)),
+      z: Number((Math.sin(angle) * radius).toFixed(2)),
+    };
+  }
+
+  function parseYear(value) {
+    const match = String(value || "").match(/\d{4}/);
+    return match ? Number(match[0]) : CURRENT_YEAR;
+  }
+
+  function clampNumber(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function countBy(items, getter) {
+    const map = new Map();
+    items.forEach((item) => {
+      const key = getter(item);
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return map;
+  }
+
+  function nameForId(id) {
+    return state.itemById.get(id)?.name || id;
+  }
+
+  function searchableText(item) {
+    return [
+      item.id,
+      item.name,
+      item.nativeName,
+      item.role,
+      item.contribution,
+      item.definition,
+      item.headquarters,
+      item.origin,
+      ...(item.aliases || []),
+      ...(item.concepts || []).map(nameForId),
+      ...(item.people || []).map(nameForId),
+      ...(item.companies || []).map(nameForId),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+  }
+
+  function clearGroup(group) {
+    while (group.children.length) {
+      const child = group.children.pop();
+      child.geometry?.dispose?.();
+      child.material?.dispose?.();
+    }
+    dom.labelLayer.innerHTML = "";
+  }
+
+  let cachedHalo = null;
+  function haloTexture() {
+    if (cachedHalo) return cachedHalo;
+    const canvas = document.createElement("canvas");
+    canvas.width = 128;
+    canvas.height = 128;
+    const context = canvas.getContext("2d");
+    const gradient = context.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gradient.addColorStop(0, "rgba(255,255,255,0.95)");
+    gradient.addColorStop(0.18, "rgba(255,255,255,0.38)");
+    gradient.addColorStop(0.52, "rgba(255,255,255,0.12)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, 128, 128);
+    cachedHalo = new THREE.CanvasTexture(canvas);
+    return cachedHalo;
+  }
+
+  function initStarfield() {
+    const canvas = dom.canvas;
+    const context = canvas.getContext("2d");
+    let stars = [];
+    let meteors = [];
+    let ships = [];
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.floor(window.innerWidth * ratio);
+      canvas.height = Math.floor(window.innerHeight * ratio);
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      stars = Array.from({ length: Math.min(360, Math.floor(window.innerWidth / 4)) }, (_, index) => {
+        const hash = stableHash(`star-${index}-${window.innerWidth}`);
+        return {
+          x: hash % window.innerWidth,
+          y: (hash >>> 8) % window.innerHeight,
+          r: 0.28 + ((hash >>> 16) % 13) / 14,
+          speed: 0.04 + ((hash >>> 4) % 10) / 180,
+          phase: (hash % 628) / 100,
+        };
+      });
+      meteors = Array.from({ length: 7 }, (_, index) => {
+        const hash = stableHash(`meteor-${index}-${window.innerWidth}`);
+        return {
+          delay: (hash % 9000) + index * 1400,
+          duration: 4200 + ((hash >>> 6) % 3600),
+          startX: (hash % window.innerWidth) - window.innerWidth * 0.25,
+          startY: ((hash >>> 9) % Math.max(1, window.innerHeight * 0.46)),
+          length: 120 + ((hash >>> 15) % 120),
+          speed: 0.18 + ((hash >>> 21) % 80) / 260,
+        };
+      });
+      ships = Array.from({ length: 5 }, (_, index) => {
+        const hash = stableHash(`ship-${index}-${window.innerWidth}`);
+        return {
+          x: (hash % window.innerWidth),
+          y: ((hash >>> 8) % window.innerHeight),
+          scale: 0.72 + ((hash >>> 15) % 70) / 100,
+          drift: 0.006 + ((hash >>> 22) % 15) / 1000,
+          phase: (hash % 628) / 100,
+        };
+      });
+    }
+    function draw(time) {
+      context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      for (const star of stars) {
+        const alpha = 0.18 + Math.sin(time * star.speed * 0.01 + star.phase) * 0.11;
+        context.beginPath();
+        context.fillStyle = `rgba(238, 243, 255, ${alpha})`;
+        context.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+        context.fill();
+      }
+      for (const meteor of meteors) {
+        const cycle = meteor.duration + meteor.delay;
+        const t = ((time + meteor.delay) % cycle) / meteor.duration;
+        if (t < 0 || t > 1) continue;
+        const alpha = Math.sin(Math.PI * t) * 0.58;
+        const x = meteor.startX + t * window.innerWidth * meteor.speed;
+        const y = meteor.startY + t * window.innerHeight * meteor.speed * 0.34;
+        context.save();
+        context.globalAlpha = alpha;
+        const gradient = context.createLinearGradient(x, y, x - meteor.length, y - meteor.length * 0.34);
+        gradient.addColorStop(0, "rgba(255,255,255,0.92)");
+        gradient.addColorStop(0.24, "rgba(116,192,252,0.48)");
+        gradient.addColorStop(1, "rgba(116,192,252,0)");
+        context.strokeStyle = gradient;
+        context.lineWidth = 1.4;
+        context.beginPath();
+        context.moveTo(x, y);
+        context.lineTo(x - meteor.length, y - meteor.length * 0.34);
+        context.stroke();
+        context.restore();
+      }
+      for (const ship of ships) {
+        const driftX = Math.sin(time * ship.drift * 0.001 + ship.phase) * 26;
+        const driftY = Math.cos(time * ship.drift * 0.001 + ship.phase) * 12;
+        const alpha = 0.05 + Math.sin(time * 0.0008 + ship.phase) * 0.025;
+        context.save();
+        context.translate(ship.x + driftX, ship.y + driftY);
+        context.rotate(Math.sin(ship.phase) * 0.9);
+        context.scale(ship.scale, ship.scale);
+        context.globalAlpha = Math.max(0.02, alpha);
+        context.fillStyle = "rgba(220,235,255,0.75)";
+        context.strokeStyle = "rgba(116,192,252,0.68)";
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(0, -7);
+        context.lineTo(18, 0);
+        context.lineTo(0, 7);
+        context.lineTo(4, 0);
+        context.closePath();
+        context.fill();
+        context.stroke();
+        context.restore();
+      }
+      requestAnimationFrame(draw);
+    }
+    resize();
+    window.addEventListener("resize", resize);
+    requestAnimationFrame(draw);
+  }
+
+  function stableHash(value) {
+    let hash = 2166136261;
+    for (let index = 0; index < String(value).length; index += 1) {
+      hash ^= String(value).charCodeAt(index);
+      hash = Math.imul(hash, 16777619);
+    }
+    return hash >>> 0;
+  }
+
+  function debounce(fn, delay) {
+    let timer = 0;
+    return (...args) => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => fn(...args), delay);
+    };
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
+  start();
+})();

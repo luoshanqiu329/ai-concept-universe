@@ -1,0 +1,5733 @@
+{
+  "date": "2026-06-13",
+  "generatedAt": "2026-06-18T02:39:32.759Z",
+  "sourceMode": "seed",
+  "changedConcepts": [],
+  "stats": {
+    "nodeCount": 100,
+    "relationCount": 91
+  },
+  "concepts": [
+    {
+      "id": "foundation-model",
+      "name": "Foundation Model",
+      "category": "基座模型",
+      "x": 70.6,
+      "y": 33.4,
+      "heat": 87,
+      "first_appear": "2021-08",
+      "definition": "可通过大规模预训练迁移到多类任务的通用模型底座。",
+      "heat_history": [
+        91,
+        92,
+        90,
+        90,
+        87,
+        86,
+        82,
+        81,
+        85,
+        76,
+        83,
+        82,
+        76,
+        77,
+        84,
+        85,
+        89,
+        91,
+        90,
+        92,
+        94,
+        95,
+        96,
+        96,
+        90,
+        89,
+        88,
+        87,
+        83,
+        82
+      ],
+      "relations": [
+        {
+          "target": "large-language-model",
+          "type": "contains"
+        },
+        {
+          "target": "diffusion-model",
+          "type": "contains"
+        },
+        {
+          "target": "visual-language-model",
+          "type": "contains"
+        },
+        {
+          "target": "world-model",
+          "type": "contains"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Foundation%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Foundation%20Model"
+        }
+      ]
+    },
+    {
+      "id": "large-language-model",
+      "name": "Large Language Model",
+      "category": "基座模型",
+      "x": 72,
+      "y": 34,
+      "heat": 92,
+      "first_appear": "2018-06",
+      "definition": "以海量文本和指令数据训练、具备语言理解与生成能力的大模型。",
+      "heat_history": [
+        100,
+        98,
+        96,
+        93,
+        87,
+        85,
+        83,
+        81,
+        85,
+        85,
+        83,
+        85,
+        93,
+        88,
+        96,
+        99,
+        99,
+        100,
+        100,
+        100,
+        98,
+        96,
+        94,
+        91,
+        93,
+        91,
+        89,
+        87,
+        83,
+        83
+      ],
+      "relations": [
+        {
+          "target": "gpt",
+          "type": "contains"
+        },
+        {
+          "target": "llama",
+          "type": "contains"
+        },
+        {
+          "target": "claude",
+          "type": "contains"
+        },
+        {
+          "target": "gemini",
+          "type": "contains"
+        },
+        {
+          "target": "small-language-model",
+          "type": "contains"
+        },
+        {
+          "target": "reasoning-model",
+          "type": "contains"
+        },
+        {
+          "target": "ai-copilot",
+          "type": "applies"
+        },
+        {
+          "target": "ai-coding",
+          "type": "applies"
+        },
+        {
+          "target": "ai-education",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Large%20Language%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Large%20Language%20Model"
+        }
+      ]
+    },
+    {
+      "id": "transformer",
+      "name": "Transformer",
+      "category": "基座模型",
+      "x": 65.6,
+      "y": 24.4,
+      "heat": 90,
+      "first_appear": "2017-06",
+      "definition": "以注意力机制为核心的神经网络架构，奠定了现代生成式 AI 的基础。",
+      "heat_history": [
+        79,
+        80,
+        79,
+        82,
+        82,
+        85,
+        86,
+        89,
+        97,
+        91,
+        98,
+        98,
+        91,
+        97,
+        93,
+        90,
+        90,
+        88,
+        84,
+        82,
+        86,
+        87,
+        89,
+        91,
+        89,
+        92,
+        95,
+        98,
+        98,
+        100
+      ],
+      "relations": [
+        {
+          "target": "bert",
+          "type": "derives"
+        },
+        {
+          "target": "gpt",
+          "type": "derives"
+        },
+        {
+          "target": "vision-transformer",
+          "type": "derives"
+        },
+        {
+          "target": "flashattention",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Transformer&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Transformer"
+        }
+      ]
+    },
+    {
+      "id": "bert",
+      "name": "BERT",
+      "category": "基座模型",
+      "x": 85.6,
+      "y": 32.8,
+      "heat": 63,
+      "first_appear": "2018-10",
+      "definition": "双向 Transformer 语言模型，曾显著推动自然语言理解任务。",
+      "heat_history": [
+        68,
+        67,
+        66,
+        64,
+        63,
+        54,
+        53,
+        53,
+        53,
+        54,
+        58,
+        59,
+        61,
+        62,
+        61,
+        71,
+        72,
+        72,
+        69,
+        69,
+        67,
+        66,
+        63,
+        62,
+        66,
+        65,
+        61,
+        61,
+        61,
+        62
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=BERT&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=BERT"
+        }
+      ]
+    },
+    {
+      "id": "gpt",
+      "name": "GPT",
+      "category": "基座模型",
+      "x": 92,
+      "y": 35.2,
+      "heat": 94,
+      "first_appear": "2018-06",
+      "definition": "基于自回归生成的语言模型系列，是聊天式 AI 和文本生成的代表。",
+      "heat_history": [
+        93,
+        96,
+        99,
+        100,
+        98,
+        99,
+        99,
+        98,
+        100,
+        99,
+        91,
+        88,
+        94,
+        92,
+        90,
+        89,
+        89,
+        89,
+        86,
+        95,
+        97,
+        100,
+        100,
+        100,
+        98,
+        99,
+        97,
+        97,
+        100,
+        93
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=GPT&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=GPT"
+        }
+      ]
+    },
+    {
+      "id": "llama",
+      "name": "LLaMA",
+      "category": "基座模型",
+      "x": 82,
+      "y": 37,
+      "heat": 87,
+      "first_appear": "2023-02",
+      "definition": "开放权重生态中影响力极高的大语言模型系列。",
+      "heat_history": [
+        87,
+        90,
+        91,
+        92,
+        93,
+        93,
+        92,
+        90,
+        89,
+        88,
+        84,
+        82,
+        80,
+        79,
+        84,
+        84,
+        85,
+        87,
+        85,
+        87,
+        89,
+        92,
+        91,
+        92,
+        98,
+        90,
+        95,
+        94,
+        91,
+        90
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=LLaMA&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=LLaMA"
+        }
+      ]
+    },
+    {
+      "id": "claude",
+      "name": "Claude",
+      "category": "基座模型",
+      "x": 84.4,
+      "y": 47.4,
+      "heat": 84,
+      "first_appear": "2023-03",
+      "definition": "强调安全性、长上下文和复杂任务处理能力的对话模型系列。",
+      "heat_history": [
+        88,
+        87,
+        88,
+        86,
+        77,
+        75,
+        75,
+        73,
+        75,
+        74,
+        76,
+        78,
+        81,
+        83,
+        87,
+        90,
+        85,
+        87,
+        89,
+        90,
+        96,
+        95,
+        88,
+        85,
+        85,
+        83,
+        83,
+        81,
+        80,
+        80
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Claude&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Claude"
+        }
+      ]
+    },
+    {
+      "id": "gemini",
+      "name": "Gemini",
+      "category": "基座模型",
+      "x": 79,
+      "y": 35,
+      "heat": 83,
+      "first_appear": "2023-12",
+      "definition": "面向多模态和通用推理能力设计的模型系列。",
+      "heat_history": [
+        77,
+        76,
+        75,
+        74,
+        74,
+        75,
+        76,
+        78,
+        78,
+        81,
+        83,
+        85,
+        87,
+        88,
+        86,
+        94,
+        93,
+        92,
+        85,
+        83,
+        81,
+        80,
+        85,
+        84,
+        81,
+        82,
+        80,
+        82,
+        82,
+        85
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Gemini&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Gemini"
+        }
+      ]
+    },
+    {
+      "id": "mixture-of-experts",
+      "name": "Mixture of Experts",
+      "category": "基座模型",
+      "x": 61,
+      "y": 16,
+      "heat": 79,
+      "first_appear": "2017-01",
+      "definition": "用多个专家子网络按需激活，提升模型容量与推理效率的结构。",
+      "heat_history": [
+        77,
+        74,
+        74,
+        72,
+        72,
+        71,
+        74,
+        74,
+        75,
+        77,
+        81,
+        83,
+        86,
+        88,
+        82,
+        83,
+        83,
+        83,
+        80,
+        79,
+        82,
+        79,
+        79,
+        77,
+        69,
+        68,
+        70,
+        71,
+        74,
+        75
+      ],
+      "relations": [
+        {
+          "target": "moe-routing",
+          "type": "contains"
+        },
+        {
+          "target": "mixture-of-depths",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Mixture%20of%20Experts&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Mixture%20of%20Experts"
+        }
+      ]
+    },
+    {
+      "id": "diffusion-model",
+      "name": "Diffusion Model",
+      "category": "基座模型",
+      "x": 76,
+      "y": 28.4,
+      "heat": 82,
+      "first_appear": "2020-06",
+      "definition": "通过逐步去噪生成图像、音频、视频等内容的生成模型范式。",
+      "heat_history": [
+        85,
+        84,
+        88,
+        78,
+        82,
+        81,
+        78,
+        78,
+        76,
+        78,
+        82,
+        83,
+        79,
+        88,
+        87,
+        88,
+        90,
+        90,
+        86,
+        85,
+        87,
+        85,
+        84,
+        82,
+        76,
+        74,
+        74,
+        74,
+        71,
+        73
+      ],
+      "relations": [
+        {
+          "target": "text-to-image",
+          "type": "derives"
+        },
+        {
+          "target": "video-generation",
+          "type": "derives"
+        },
+        {
+          "target": "3d-generation",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Diffusion%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Diffusion%20Model"
+        }
+      ]
+    },
+    {
+      "id": "vision-transformer",
+      "name": "Vision Transformer",
+      "category": "基座模型",
+      "x": 70.8,
+      "y": 19.6,
+      "heat": 69,
+      "first_appear": "2020-10",
+      "definition": "将 Transformer 用于视觉任务的模型架构。",
+      "heat_history": [
+        76,
+        75,
+        75,
+        72,
+        72,
+        69,
+        69,
+        67,
+        65,
+        64,
+        65,
+        66,
+        68,
+        71,
+        65,
+        68,
+        70,
+        72,
+        72,
+        73,
+        75,
+        74,
+        74,
+        71,
+        71,
+        68,
+        68,
+        66,
+        58,
+        57
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Vision%20Transformer&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Vision%20Transformer"
+        }
+      ]
+    },
+    {
+      "id": "mamba",
+      "name": "Mamba",
+      "category": "基座模型",
+      "x": 39.2,
+      "y": 14,
+      "heat": 72,
+      "first_appear": "2023-12",
+      "definition": "基于状态空间模型的序列建模架构，强调长序列效率。",
+      "heat_history": [
+        72,
+        69,
+        69,
+        67,
+        63,
+        70,
+        64,
+        64,
+        70,
+        71,
+        73,
+        75,
+        78,
+        80,
+        77,
+        78,
+        78,
+        78,
+        74,
+        72,
+        76,
+        73,
+        65,
+        62,
+        66,
+        65,
+        67,
+        67,
+        65,
+        66
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Mamba&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Mamba"
+        }
+      ]
+    },
+    {
+      "id": "state-space-model",
+      "name": "State Space Model",
+      "category": "基座模型",
+      "x": 28.4,
+      "y": 8.2,
+      "heat": 62,
+      "first_appear": "2021-11",
+      "definition": "用状态转移描述序列信息的模型家族，被用于探索 Transformer 替代路线。",
+      "heat_history": [
+        55,
+        53,
+        60,
+        59,
+        60,
+        60,
+        62,
+        63,
+        66,
+        68,
+        67,
+        68,
+        67,
+        67,
+        69,
+        68,
+        64,
+        63,
+        64,
+        54,
+        55,
+        53,
+        52,
+        51,
+        52,
+        60,
+        62,
+        63,
+        65,
+        66
+      ],
+      "relations": [
+        {
+          "target": "mamba",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=State%20Space%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=State%20Space%20Model"
+        }
+      ]
+    },
+    {
+      "id": "world-model",
+      "name": "World Model",
+      "category": "基座模型",
+      "x": 38.8,
+      "y": 33.6,
+      "heat": 74,
+      "first_appear": "2018-03",
+      "definition": "学习环境动态与因果结构，用于预测、规划和智能体决策的模型。",
+      "heat_history": [
+        77,
+        75,
+        75,
+        72,
+        72,
+        69,
+        70,
+        68,
+        69,
+        69,
+        65,
+        67,
+        69,
+        72,
+        75,
+        77,
+        80,
+        81,
+        82,
+        83,
+        80,
+        78,
+        78,
+        76,
+        75,
+        73,
+        65,
+        71,
+        71,
+        70
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=World%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=World%20Model"
+        }
+      ]
+    },
+    {
+      "id": "small-language-model",
+      "name": "Small Language Model",
+      "category": "基座模型",
+      "x": 75.8,
+      "y": 21,
+      "heat": 75,
+      "first_appear": "2023-09",
+      "definition": "参数规模更小、便于端侧部署和企业私有化的大语言模型。",
+      "heat_history": [
+        76,
+        74,
+        72,
+        71,
+        68,
+        68,
+        68,
+        78,
+        74,
+        75,
+        80,
+        82,
+        81,
+        82,
+        80,
+        80,
+        76,
+        75,
+        79,
+        69,
+        69,
+        66,
+        64,
+        63,
+        67,
+        67,
+        68,
+        69,
+        74,
+        75
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Small%20Language%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Small%20Language%20Model"
+        }
+      ]
+    },
+    {
+      "id": "reasoning-model",
+      "name": "Reasoning Model",
+      "category": "基座模型",
+      "x": 55,
+      "y": 33.8,
+      "heat": 84,
+      "first_appear": "2024-09",
+      "definition": "通过更强推理链、搜索或测试时计算处理复杂问题的模型。",
+      "heat_history": [
+        79,
+        79,
+        75,
+        76,
+        83,
+        85,
+        89,
+        90,
+        93,
+        90,
+        94,
+        85,
+        85,
+        84,
+        85,
+        84,
+        83,
+        82,
+        77,
+        77,
+        80,
+        80,
+        84,
+        85,
+        84,
+        86,
+        90,
+        91,
+        94,
+        94
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Reasoning%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Reasoning%20Model"
+        }
+      ]
+    },
+    {
+      "id": "supervised-finetuning",
+      "name": "Supervised Fine-Tuning",
+      "category": "微调技术",
+      "x": 72,
+      "y": 39.6,
+      "heat": 74,
+      "first_appear": "2018-01",
+      "definition": "用人工标注样例继续训练模型，使其适配目标任务和表达格式。",
+      "heat_history": [
+        84,
+        83,
+        77,
+        83,
+        76,
+        73,
+        73,
+        70,
+        68,
+        66,
+        65,
+        65,
+        66,
+        68,
+        70,
+        72,
+        75,
+        78,
+        79,
+        81,
+        84,
+        84,
+        78,
+        76,
+        77,
+        74,
+        74,
+        71,
+        71,
+        69
+      ],
+      "relations": [
+        {
+          "target": "instruction-tuning",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Supervised%20Fine-Tuning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Supervised%20Fine-Tuning"
+        }
+      ]
+    },
+    {
+      "id": "instruction-tuning",
+      "name": "Instruction Tuning",
+      "category": "微调技术",
+      "x": 82,
+      "y": 45.8,
+      "heat": 79,
+      "first_appear": "2021-09",
+      "definition": "用指令-回答数据训练模型，让模型更好地理解用户任务。",
+      "heat_history": [
+        73,
+        71,
+        72,
+        70,
+        67,
+        67,
+        70,
+        72,
+        73,
+        74,
+        82,
+        85,
+        80,
+        82,
+        86,
+        87,
+        87,
+        86,
+        81,
+        79,
+        80,
+        78,
+        78,
+        77,
+        74,
+        74,
+        77,
+        78,
+        79,
+        81
+      ],
+      "relations": [
+        {
+          "target": "rlhf",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Instruction%20Tuning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Instruction%20Tuning"
+        }
+      ]
+    },
+    {
+      "id": "rlhf",
+      "name": "RLHF",
+      "category": "微调技术",
+      "x": 77.2,
+      "y": 36,
+      "heat": 83,
+      "first_appear": "2017-07",
+      "definition": "通过人类偏好反馈训练模型，使输出更符合人类预期。",
+      "heat_history": [
+        84,
+        81,
+        78,
+        76,
+        71,
+        78,
+        77,
+        77,
+        74,
+        75,
+        81,
+        84,
+        85,
+        88,
+        88,
+        90,
+        88,
+        89,
+        88,
+        88,
+        85,
+        82,
+        80,
+        77,
+        80,
+        79,
+        78,
+        78,
+        83,
+        84
+      ],
+      "relations": [
+        {
+          "target": "rlaif",
+          "type": "derives"
+        },
+        {
+          "target": "preference-optimization",
+          "type": "contains"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=RLHF&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=RLHF"
+        }
+      ]
+    },
+    {
+      "id": "rlaif",
+      "name": "RLAIF",
+      "category": "微调技术",
+      "x": 53.6,
+      "y": 46.2,
+      "heat": 60,
+      "first_appear": "2022-12",
+      "definition": "用 AI 反馈替代部分人类反馈，降低对齐数据获取成本。",
+      "heat_history": [
+        51,
+        51,
+        52,
+        54,
+        56,
+        57,
+        59,
+        68,
+        69,
+        69,
+        64,
+        64,
+        61,
+        60,
+        61,
+        59,
+        56,
+        55,
+        55,
+        56,
+        57,
+        57,
+        58,
+        59,
+        61,
+        63,
+        64,
+        65,
+        68,
+        68
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=RLAIF&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=RLAIF"
+        }
+      ]
+    },
+    {
+      "id": "dpo",
+      "name": "DPO",
+      "category": "微调技术",
+      "x": 69,
+      "y": 34.2,
+      "heat": 78,
+      "first_appear": "2023-05",
+      "definition": "直接用偏好对优化模型行为的训练方法，简化传统 RLHF 流程。",
+      "heat_history": [
+        75,
+        74,
+        72,
+        71,
+        74,
+        66,
+        67,
+        69,
+        74,
+        77,
+        80,
+        82,
+        84,
+        85,
+        85,
+        85,
+        84,
+        83,
+        83,
+        80,
+        79,
+        77,
+        74,
+        73,
+        75,
+        75,
+        73,
+        75,
+        78,
+        80
+      ],
+      "relations": [
+        {
+          "target": "preference-optimization",
+          "type": "contains"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=DPO&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=DPO"
+        }
+      ]
+    },
+    {
+      "id": "lora",
+      "name": "LoRA",
+      "category": "微调技术",
+      "x": 84.4,
+      "y": 38.4,
+      "heat": 85,
+      "first_appear": "2021-06",
+      "definition": "通过低秩矩阵适配大模型参数的轻量化微调方法。",
+      "heat_history": [
+        74,
+        73,
+        81,
+        81,
+        82,
+        84,
+        85,
+        87,
+        90,
+        91,
+        95,
+        88,
+        94,
+        94,
+        87,
+        86,
+        82,
+        81,
+        82,
+        81,
+        83,
+        82,
+        81,
+        82,
+        82,
+        84,
+        85,
+        87,
+        89,
+        90
+      ],
+      "relations": [
+        {
+          "target": "qlora",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=LoRA&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=LoRA"
+        }
+      ]
+    },
+    {
+      "id": "qlora",
+      "name": "QLoRA",
+      "category": "微调技术",
+      "x": 81.2,
+      "y": 31,
+      "heat": 76,
+      "first_appear": "2023-05",
+      "definition": "结合量化与 LoRA 的低成本微调方案。",
+      "heat_history": [
+        85,
+        86,
+        84,
+        85,
+        87,
+        86,
+        82,
+        80,
+        79,
+        69,
+        71,
+        69,
+        70,
+        70,
+        72,
+        73,
+        77,
+        78,
+        74,
+        83,
+        82,
+        83,
+        84,
+        85,
+        84,
+        75,
+        74,
+        72,
+        68,
+        67
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=QLoRA&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=QLoRA"
+        }
+      ]
+    },
+    {
+      "id": "adapter-tuning",
+      "name": "Adapter Tuning",
+      "category": "微调技术",
+      "x": 74.2,
+      "y": 24.4,
+      "heat": 54,
+      "first_appear": "2019-02",
+      "definition": "在冻结主模型参数的同时插入小型适配模块进行任务迁移。",
+      "heat_history": [
+        51,
+        50,
+        51,
+        51,
+        53,
+        47,
+        49,
+        52,
+        53,
+        55,
+        60,
+        60,
+        60,
+        59,
+        62,
+        60,
+        58,
+        55,
+        55,
+        52,
+        52,
+        43,
+        49,
+        50,
+        49,
+        51,
+        51,
+        53,
+        53,
+        56
+      ],
+      "relations": [
+        {
+          "target": "lora",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Adapter%20Tuning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Adapter%20Tuning"
+        }
+      ]
+    },
+    {
+      "id": "prompt-tuning",
+      "name": "Prompt Tuning",
+      "category": "微调技术",
+      "x": 68.8,
+      "y": 30.8,
+      "heat": 56,
+      "first_appear": "2021-04",
+      "definition": "通过可学习提示向量引导模型完成特定任务。",
+      "heat_history": [
+        55,
+        52,
+        52,
+        50,
+        50,
+        49,
+        51,
+        51,
+        53,
+        54,
+        57,
+        60,
+        63,
+        65,
+        66,
+        59,
+        60,
+        59,
+        56,
+        55,
+        58,
+        55,
+        55,
+        52,
+        45,
+        52,
+        46,
+        46,
+        49,
+        50
+      ],
+      "relations": [
+        {
+          "target": "instruction-tuning",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Prompt%20Tuning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Prompt%20Tuning"
+        }
+      ]
+    },
+    {
+      "id": "preference-optimization",
+      "name": "Preference Optimization",
+      "category": "微调技术",
+      "x": 59.6,
+      "y": 44.4,
+      "heat": 72,
+      "first_appear": "2023-05",
+      "definition": "围绕用户或标注偏好直接优化模型输出风格和质量的方法集合。",
+      "heat_history": [
+        72,
+        71,
+        70,
+        68,
+        62,
+        62,
+        61,
+        62,
+        66,
+        68,
+        68,
+        70,
+        72,
+        73,
+        75,
+        76,
+        77,
+        77,
+        78,
+        77,
+        76,
+        75,
+        72,
+        70,
+        72,
+        71,
+        68,
+        69,
+        70,
+        72
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Preference%20Optimization&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Preference%20Optimization"
+        }
+      ]
+    },
+    {
+      "id": "quantization",
+      "name": "Quantization",
+      "category": "推理优化",
+      "x": 86.4,
+      "y": 19.6,
+      "heat": 85,
+      "first_appear": "2015-01",
+      "definition": "降低权重或激活数值精度，以减少模型存储和推理成本。",
+      "heat_history": [
+        89,
+        91,
+        89,
+        90,
+        92,
+        91,
+        88,
+        86,
+        86,
+        76,
+        77,
+        76,
+        78,
+        77,
+        80,
+        81,
+        85,
+        87,
+        91,
+        93,
+        92,
+        94,
+        95,
+        96,
+        95,
+        95,
+        86,
+        84,
+        89,
+        80
+      ],
+      "relations": [
+        {
+          "target": "edge-inference",
+          "type": "optimizes"
+        },
+        {
+          "target": "qlora",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Quantization&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Quantization"
+        }
+      ]
+    },
+    {
+      "id": "pruning",
+      "name": "Pruning",
+      "category": "推理优化",
+      "x": 78,
+      "y": 8.6,
+      "heat": 52,
+      "first_appear": "1990-01",
+      "definition": "移除冗余参数或结构，让模型更轻、更快。",
+      "heat_history": [
+        51,
+        54,
+        54,
+        56,
+        63,
+        56,
+        62,
+        61,
+        60,
+        58,
+        51,
+        48,
+        48,
+        46,
+        42,
+        49,
+        43,
+        43,
+        51,
+        52,
+        52,
+        55,
+        57,
+        59,
+        56,
+        57,
+        57,
+        57,
+        59,
+        50
+      ],
+      "relations": [
+        {
+          "target": "edge-inference",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Pruning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Pruning"
+        }
+      ]
+    },
+    {
+      "id": "distillation",
+      "name": "Distillation",
+      "category": "推理优化",
+      "x": 87,
+      "y": 27.4,
+      "heat": 71,
+      "first_appear": "2015-03",
+      "definition": "用大模型指导小模型学习，以保留能力并降低部署成本。",
+      "heat_history": [
+        69,
+        67,
+        64,
+        62,
+        65,
+        64,
+        63,
+        63,
+        67,
+        68,
+        65,
+        68,
+        69,
+        72,
+        80,
+        74,
+        81,
+        81,
+        79,
+        79,
+        78,
+        75,
+        73,
+        70,
+        65,
+        64,
+        71,
+        71,
+        67,
+        68
+      ],
+      "relations": [
+        {
+          "target": "small-language-model",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Distillation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Distillation"
+        }
+      ]
+    },
+    {
+      "id": "speculative-decoding",
+      "name": "Speculative Decoding",
+      "category": "推理优化",
+      "x": 63.6,
+      "y": 22.2,
+      "heat": 73,
+      "first_appear": "2023-02",
+      "definition": "用小模型预生成候选 token，再由大模型验证以加速生成。",
+      "heat_history": [
+        79,
+        78,
+        77,
+        76,
+        77,
+        76,
+        74,
+        65,
+        68,
+        68,
+        66,
+        67,
+        67,
+        68,
+        70,
+        71,
+        80,
+        81,
+        75,
+        83,
+        82,
+        82,
+        78,
+        77,
+        69,
+        68,
+        64,
+        63,
+        63,
+        63
+      ],
+      "relations": [
+        {
+          "target": "vllm",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Speculative%20Decoding&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Speculative%20Decoding"
+        }
+      ]
+    },
+    {
+      "id": "kv-cache",
+      "name": "KV Cache",
+      "category": "推理优化",
+      "x": 91.2,
+      "y": 24,
+      "heat": 78,
+      "first_appear": "2018-01",
+      "definition": "缓存注意力键值向量，减少自回归生成中的重复计算。",
+      "heat_history": [
+        89,
+        88,
+        81,
+        87,
+        79,
+        76,
+        75,
+        73,
+        71,
+        69,
+        70,
+        71,
+        72,
+        74,
+        77,
+        80,
+        82,
+        85,
+        85,
+        87,
+        84,
+        83,
+        84,
+        82,
+        82,
+        79,
+        78,
+        76,
+        68,
+        74
+      ],
+      "relations": [
+        {
+          "target": "vllm",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=KV%20Cache&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=KV%20Cache"
+        }
+      ]
+    },
+    {
+      "id": "flashattention",
+      "name": "FlashAttention",
+      "category": "推理优化",
+      "x": 81.6,
+      "y": 19.6,
+      "heat": 80,
+      "first_appear": "2022-05",
+      "definition": "通过 IO 感知实现更快、更省显存的注意力计算。",
+      "heat_history": [
+        81,
+        79,
+        77,
+        76,
+        72,
+        72,
+        81,
+        82,
+        80,
+        82,
+        84,
+        86,
+        85,
+        86,
+        84,
+        83,
+        88,
+        78,
+        76,
+        74,
+        78,
+        75,
+        74,
+        72,
+        69,
+        69,
+        77,
+        79,
+        77,
+        78
+      ],
+      "relations": [
+        {
+          "target": "vllm",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=FlashAttention&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=FlashAttention"
+        }
+      ]
+    },
+    {
+      "id": "vllm",
+      "name": "vLLM",
+      "category": "推理优化",
+      "x": 85.2,
+      "y": 16.8,
+      "heat": 83,
+      "first_appear": "2023-06",
+      "definition": "面向大语言模型高吞吐服务的推理引擎。",
+      "heat_history": [
+        85,
+        84,
+        80,
+        78,
+        80,
+        79,
+        77,
+        78,
+        82,
+        75,
+        80,
+        81,
+        85,
+        86,
+        90,
+        90,
+        92,
+        91,
+        90,
+        88,
+        89,
+        79,
+        78,
+        76,
+        75,
+        74,
+        75,
+        75,
+        77,
+        79
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=vLLM&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=vLLM"
+        }
+      ]
+    },
+    {
+      "id": "tensor-parallelism",
+      "name": "Tensor Parallelism",
+      "category": "推理优化",
+      "x": 78.8,
+      "y": 23.4,
+      "heat": 64,
+      "first_appear": "2019-09",
+      "definition": "将张量计算拆分到多张加速卡上并行执行。",
+      "heat_history": [
+        71,
+        71,
+        73,
+        71,
+        67,
+        64,
+        64,
+        61,
+        56,
+        54,
+        57,
+        57,
+        58,
+        60,
+        57,
+        60,
+        63,
+        65,
+        65,
+        67,
+        73,
+        73,
+        74,
+        73,
+        68,
+        66,
+        66,
+        63,
+        58,
+        56
+      ],
+      "relations": [
+        {
+          "target": "vllm",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Tensor%20Parallelism&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Tensor%20Parallelism"
+        }
+      ]
+    },
+    {
+      "id": "mixture-of-depths",
+      "name": "Mixture of Depths",
+      "category": "推理优化",
+      "x": 43,
+      "y": 19.8,
+      "heat": 54,
+      "first_appear": "2024-04",
+      "definition": "让不同 token 走不同计算深度，以控制推理开销。",
+      "heat_history": [
+        65,
+        64,
+        60,
+        58,
+        54,
+        52,
+        49,
+        48,
+        46,
+        46,
+        46,
+        47,
+        50,
+        52,
+        59,
+        57,
+        63,
+        63,
+        58,
+        57,
+        60,
+        59,
+        57,
+        56,
+        49,
+        47,
+        46,
+        46,
+        42,
+        43
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Mixture%20of%20Depths&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Mixture%20of%20Depths"
+        }
+      ]
+    },
+    {
+      "id": "test-time-compute",
+      "name": "Test-Time Compute",
+      "category": "推理优化",
+      "x": 50.6,
+      "y": 41.4,
+      "heat": 86,
+      "first_appear": "2024-09",
+      "definition": "在推理阶段投入更多搜索、采样或自检计算来提升答案质量。",
+      "heat_history": [
+        87,
+        84,
+        82,
+        80,
+        83,
+        82,
+        81,
+        81,
+        79,
+        80,
+        87,
+        89,
+        90,
+        92,
+        91,
+        92,
+        90,
+        89,
+        88,
+        86,
+        83,
+        80,
+        85,
+        83,
+        78,
+        77,
+        76,
+        77,
+        82,
+        84
+      ],
+      "relations": [
+        {
+          "target": "reasoning-model",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Test-Time%20Compute&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Test-Time%20Compute"
+        }
+      ]
+    },
+    {
+      "id": "edge-inference",
+      "name": "Edge Inference",
+      "category": "推理优化",
+      "x": 81,
+      "y": 27.8,
+      "heat": 70,
+      "first_appear": "2019-01",
+      "definition": "将 AI 推理部署在手机、PC、车端或边缘设备上。",
+      "heat_history": [
+        72,
+        74,
+        76,
+        78,
+        74,
+        74,
+        74,
+        73,
+        69,
+        67,
+        72,
+        69,
+        67,
+        65,
+        64,
+        64,
+        64,
+        65,
+        66,
+        68,
+        76,
+        70,
+        78,
+        80,
+        75,
+        76,
+        73,
+        72,
+        73,
+        72
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Edge%20Inference&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Edge%20Inference"
+        }
+      ]
+    },
+    {
+      "id": "moe-routing",
+      "name": "MoE Routing",
+      "category": "推理优化",
+      "x": 58.6,
+      "y": 19.2,
+      "heat": 66,
+      "first_appear": "2017-01",
+      "definition": "决定每个 token 应该激活哪些专家网络的路由机制。",
+      "heat_history": [
+        79,
+        78,
+        71,
+        68,
+        68,
+        65,
+        65,
+        62,
+        60,
+        58,
+        62,
+        63,
+        64,
+        58,
+        61,
+        63,
+        66,
+        68,
+        69,
+        70,
+        75,
+        74,
+        67,
+        73,
+        65,
+        62,
+        61,
+        58,
+        58,
+        57
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=MoE%20Routing&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=MoE%20Routing"
+        }
+      ]
+    },
+    {
+      "id": "contrastive-learning",
+      "name": "Contrastive Learning",
+      "category": "多模态技术",
+      "x": 66,
+      "y": 36.6,
+      "heat": 65,
+      "first_appear": "2018-01",
+      "definition": "通过拉近相似样本、拉远不同样本来学习通用表示。",
+      "heat_history": [
+        53,
+        54,
+        52,
+        54,
+        54,
+        57,
+        66,
+        61,
+        69,
+        72,
+        74,
+        74,
+        68,
+        66,
+        70,
+        68,
+        68,
+        66,
+        61,
+        59,
+        59,
+        60,
+        61,
+        63,
+        60,
+        63,
+        66,
+        69,
+        69,
+        72
+      ],
+      "relations": [
+        {
+          "target": "clip",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Contrastive%20Learning&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Contrastive%20Learning"
+        }
+      ]
+    },
+    {
+      "id": "clip",
+      "name": "CLIP",
+      "category": "多模态技术",
+      "x": 78,
+      "y": 43,
+      "heat": 72,
+      "first_appear": "2021-01",
+      "definition": "将图像和文本映射到同一语义空间的多模态模型。",
+      "heat_history": [
+        75,
+        76,
+        80,
+        80,
+        77,
+        76,
+        77,
+        75,
+        72,
+        69,
+        71,
+        70,
+        69,
+        68,
+        64,
+        65,
+        66,
+        68,
+        66,
+        69,
+        73,
+        75,
+        78,
+        79,
+        76,
+        75,
+        76,
+        74,
+        71,
+        76
+      ],
+      "relations": [
+        {
+          "target": "multimodal-embedding",
+          "type": "derives"
+        },
+        {
+          "target": "visual-language-model",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=CLIP&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=CLIP"
+        }
+      ]
+    },
+    {
+      "id": "visual-language-model",
+      "name": "Vision-Language Model",
+      "category": "多模态技术",
+      "x": 72.2,
+      "y": 58.8,
+      "heat": 82,
+      "first_appear": "2021-01",
+      "definition": "同时理解图像与语言输入，并能进行跨模态推理的模型。",
+      "heat_history": [
+        88,
+        87,
+        85,
+        84,
+        74,
+        73,
+        73,
+        73,
+        74,
+        76,
+        81,
+        83,
+        84,
+        86,
+        84,
+        85,
+        85,
+        85,
+        89,
+        88,
+        86,
+        84,
+        80,
+        79,
+        75,
+        74,
+        79,
+        71,
+        72,
+        73
+      ],
+      "relations": [
+        {
+          "target": "image-understanding",
+          "type": "applies"
+        },
+        {
+          "target": "vision-language-action",
+          "type": "applies"
+        },
+        {
+          "target": "ai-healthcare",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Vision-Language%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Vision-Language%20Model"
+        }
+      ]
+    },
+    {
+      "id": "text-to-image",
+      "name": "Text-to-Image",
+      "category": "多模态技术",
+      "x": 88.8,
+      "y": 76.6,
+      "heat": 81,
+      "first_appear": "2021-01",
+      "definition": "根据文字提示生成图像的内容生成技术。",
+      "heat_history": [
+        70,
+        71,
+        70,
+        72,
+        77,
+        80,
+        81,
+        84,
+        87,
+        88,
+        85,
+        84,
+        85,
+        83,
+        83,
+        81,
+        81,
+        78,
+        79,
+        77,
+        72,
+        73,
+        74,
+        77,
+        79,
+        82,
+        85,
+        88,
+        88,
+        90
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Text-to-Image&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Text-to-Image"
+        }
+      ]
+    },
+    {
+      "id": "diffusion-transformer",
+      "name": "Diffusion Transformer",
+      "category": "多模态技术",
+      "x": 58.8,
+      "y": 46,
+      "heat": 72,
+      "first_appear": "2022-12",
+      "definition": "将 Transformer 结构用于扩散生成过程的模型路线。",
+      "heat_history": [
+        59,
+        60,
+        61,
+        63,
+        65,
+        68,
+        71,
+        74,
+        76,
+        78,
+        76,
+        76,
+        75,
+        74,
+        77,
+        75,
+        73,
+        70,
+        71,
+        69,
+        70,
+        70,
+        69,
+        71,
+        70,
+        73,
+        74,
+        77,
+        77,
+        80
+      ],
+      "relations": [
+        {
+          "target": "video-generation",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Diffusion%20Transformer&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Diffusion%20Transformer"
+        }
+      ]
+    },
+    {
+      "id": "video-generation",
+      "name": "Video Generation",
+      "category": "多模态技术",
+      "x": 60.6,
+      "y": 71.8,
+      "heat": 87,
+      "first_appear": "2022-09",
+      "definition": "根据文本、图像或视频条件生成动态视频内容的技术。",
+      "heat_history": [
+        92,
+        90,
+        88,
+        85,
+        83,
+        81,
+        79,
+        77,
+        78,
+        78,
+        81,
+        84,
+        84,
+        87,
+        92,
+        87,
+        95,
+        97,
+        93,
+        93,
+        95,
+        93,
+        91,
+        89,
+        86,
+        84,
+        82,
+        80,
+        79,
+        87
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Video%20Generation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Video%20Generation"
+        }
+      ]
+    },
+    {
+      "id": "speech-recognition",
+      "name": "Speech Recognition",
+      "category": "多模态技术",
+      "x": 90.6,
+      "y": 62.6,
+      "heat": 70,
+      "first_appear": "1980-01",
+      "definition": "将语音信号转写为文本或结构化语义的技术。",
+      "heat_history": [
+        67,
+        64,
+        62,
+        60,
+        63,
+        61,
+        61,
+        61,
+        64,
+        66,
+        69,
+        72,
+        72,
+        75,
+        75,
+        77,
+        76,
+        77,
+        74,
+        74,
+        73,
+        70,
+        68,
+        66,
+        69,
+        67,
+        67,
+        66,
+        70,
+        71
+      ],
+      "relations": [
+        {
+          "target": "ai-customer-service",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Speech%20Recognition&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Speech%20Recognition"
+        }
+      ]
+    },
+    {
+      "id": "text-to-speech",
+      "name": "Text-to-Speech",
+      "category": "多模态技术",
+      "x": 87.6,
+      "y": 66.2,
+      "heat": 73,
+      "first_appear": "1980-01",
+      "definition": "将文本生成自然语音的语音合成技术。",
+      "heat_history": [
+        75,
+        76,
+        77,
+        78,
+        78,
+        77,
+        76,
+        74,
+        72,
+        69,
+        70,
+        69,
+        66,
+        66,
+        69,
+        70,
+        69,
+        72,
+        75,
+        70,
+        73,
+        75,
+        84,
+        85,
+        85,
+        84,
+        83,
+        81,
+        80,
+        78
+      ],
+      "relations": [
+        {
+          "target": "ai-customer-service",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Text-to-Speech&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Text-to-Speech"
+        }
+      ]
+    },
+    {
+      "id": "image-understanding",
+      "name": "Image Understanding",
+      "category": "多模态技术",
+      "x": 81.6,
+      "y": 60.4,
+      "heat": 76,
+      "first_appear": "2012-09",
+      "definition": "让模型识别、描述和推理图像内容的视觉能力。",
+      "heat_history": [
+        69,
+        71,
+        72,
+        82,
+        79,
+        79,
+        79,
+        77,
+        80,
+        78,
+        76,
+        75,
+        72,
+        71,
+        68,
+        69,
+        68,
+        70,
+        71,
+        74,
+        76,
+        77,
+        79,
+        80,
+        86,
+        86,
+        86,
+        84,
+        88,
+        85
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Image%20Understanding&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Image%20Understanding"
+        }
+      ]
+    },
+    {
+      "id": "ocr",
+      "name": "OCR",
+      "category": "多模态技术",
+      "x": 91,
+      "y": 70.6,
+      "heat": 55,
+      "first_appear": "1974-01",
+      "definition": "从图片或扫描件中识别文字信息的成熟视觉技术。",
+      "heat_history": [
+        47,
+        55,
+        50,
+        51,
+        55,
+        57,
+        60,
+        61,
+        62,
+        62,
+        59,
+        59,
+        58,
+        57,
+        55,
+        53,
+        52,
+        50,
+        48,
+        48,
+        45,
+        45,
+        48,
+        49,
+        53,
+        54,
+        58,
+        59,
+        62,
+        62
+      ],
+      "relations": [
+        {
+          "target": "ai-finance",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=OCR&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=OCR"
+        }
+      ]
+    },
+    {
+      "id": "multimodal-embedding",
+      "name": "Multimodal Embedding",
+      "category": "多模态技术",
+      "x": 76,
+      "y": 44,
+      "heat": 69,
+      "first_appear": "2021-01",
+      "definition": "将文本、图像、音频等内容统一表示为可检索向量。",
+      "heat_history": [
+        66,
+        67,
+        71,
+        71,
+        74,
+        73,
+        74,
+        72,
+        70,
+        68,
+        69,
+        68,
+        59,
+        59,
+        59,
+        60,
+        62,
+        64,
+        65,
+        68,
+        75,
+        77,
+        73,
+        73,
+        76,
+        75,
+        76,
+        74,
+        74,
+        72
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Multimodal%20Embedding&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Multimodal%20Embedding"
+        }
+      ]
+    },
+    {
+      "id": "3d-generation",
+      "name": "3D Generation",
+      "category": "多模态技术",
+      "x": 50.8,
+      "y": 73.8,
+      "heat": 68,
+      "first_appear": "2022-09",
+      "definition": "从文本、图片或草图生成三维资产和场景的技术。",
+      "heat_history": [
+        60,
+        59,
+        60,
+        59,
+        61,
+        62,
+        58,
+        59,
+        62,
+        72,
+        70,
+        73,
+        75,
+        76,
+        77,
+        77,
+        76,
+        67,
+        72,
+        71,
+        66,
+        64,
+        66,
+        65,
+        67,
+        68,
+        63,
+        73,
+        69,
+        71
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=3D%20Generation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=3D%20Generation"
+        }
+      ]
+    },
+    {
+      "id": "vision-language-action",
+      "name": "Vision-Language-Action",
+      "category": "多模态技术",
+      "x": 42,
+      "y": 59.8,
+      "heat": 75,
+      "first_appear": "2023-07",
+      "definition": "将视觉、语言和动作决策结合，用于机器人和具身智能。",
+      "heat_history": [
+        82,
+        80,
+        80,
+        77,
+        80,
+        77,
+        69,
+        74,
+        70,
+        69,
+        73,
+        66,
+        68,
+        70,
+        76,
+        79,
+        81,
+        83,
+        82,
+        83,
+        80,
+        78,
+        78,
+        76,
+        70,
+        75,
+        67,
+        65,
+        68,
+        67
+      ],
+      "relations": [
+        {
+          "target": "ai-robotics",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Vision-Language-Action&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Vision-Language-Action"
+        }
+      ]
+    },
+    {
+      "id": "ai-agent",
+      "name": "AI Agent",
+      "category": "智能体Agent",
+      "x": 73.6,
+      "y": 77.6,
+      "heat": 90,
+      "first_appear": "2023-03",
+      "definition": "能感知目标、调用工具、规划步骤并持续执行任务的 AI 系统。",
+      "heat_history": [
+        93,
+        94,
+        96,
+        95,
+        99,
+        97,
+        89,
+        94,
+        89,
+        86,
+        87,
+        86,
+        87,
+        80,
+        84,
+        86,
+        89,
+        92,
+        91,
+        94,
+        94,
+        95,
+        97,
+        96,
+        92,
+        98,
+        90,
+        87,
+        90,
+        87
+      ],
+      "relations": [
+        {
+          "target": "tool-use",
+          "type": "contains"
+        },
+        {
+          "target": "planning-agent",
+          "type": "contains"
+        },
+        {
+          "target": "agent-memory",
+          "type": "contains"
+        },
+        {
+          "target": "multi-agent-system",
+          "type": "contains"
+        },
+        {
+          "target": "autonomous-workflow",
+          "type": "applies"
+        },
+        {
+          "target": "ai-copilot",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Agent&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Agent"
+        }
+      ]
+    },
+    {
+      "id": "tool-use",
+      "name": "Tool Use",
+      "category": "智能体Agent",
+      "x": 77.6,
+      "y": 65.2,
+      "heat": 82,
+      "first_appear": "2022-04",
+      "definition": "让模型通过外部工具、API 或函数完成自身无法直接完成的操作。",
+      "heat_history": [
+        88,
+        87,
+        86,
+        84,
+        82,
+        79,
+        77,
+        74,
+        72,
+        71,
+        73,
+        74,
+        73,
+        75,
+        81,
+        84,
+        84,
+        87,
+        90,
+        92,
+        93,
+        93,
+        91,
+        90,
+        87,
+        85,
+        82,
+        80,
+        80,
+        78
+      ],
+      "relations": [
+        {
+          "target": "function-calling",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Tool%20Use&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Tool%20Use"
+        }
+      ]
+    },
+    {
+      "id": "function-calling",
+      "name": "Function Calling",
+      "category": "智能体Agent",
+      "x": 92,
+      "y": 56,
+      "heat": 78,
+      "first_appear": "2023-06",
+      "definition": "让模型以结构化参数调用函数或服务的接口范式。",
+      "heat_history": [
+        79,
+        77,
+        73,
+        72,
+        74,
+        74,
+        73,
+        74,
+        71,
+        73,
+        76,
+        78,
+        82,
+        82,
+        85,
+        85,
+        87,
+        85,
+        83,
+        81,
+        81,
+        79,
+        70,
+        69,
+        68,
+        68,
+        69,
+        71,
+        72,
+        75
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Function%20Calling&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Function%20Calling"
+        }
+      ]
+    },
+    {
+      "id": "planning-agent",
+      "name": "Planning Agent",
+      "category": "智能体Agent",
+      "x": 56.4,
+      "y": 60.8,
+      "heat": 73,
+      "first_appear": "2023-03",
+      "definition": "将复杂任务拆分为步骤并动态调整执行路径的智能体。",
+      "heat_history": [
+        80,
+        82,
+        81,
+        82,
+        80,
+        79,
+        76,
+        75,
+        71,
+        69,
+        70,
+        66,
+        69,
+        68,
+        63,
+        71,
+        66,
+        68,
+        75,
+        76,
+        74,
+        76,
+        78,
+        79,
+        82,
+        82,
+        81,
+        72,
+        75,
+        74
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Planning%20Agent&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Planning%20Agent"
+        }
+      ]
+    },
+    {
+      "id": "multi-agent-system",
+      "name": "Multi-Agent System",
+      "category": "智能体Agent",
+      "x": 46,
+      "y": 71.6,
+      "heat": 72,
+      "first_appear": "2023-04",
+      "definition": "由多个智能体协作、辩论或分工完成任务的系统。",
+      "heat_history": [
+        63,
+        65,
+        64,
+        66,
+        67,
+        70,
+        70,
+        73,
+        73,
+        75,
+        76,
+        75,
+        76,
+        74,
+        78,
+        75,
+        67,
+        65,
+        69,
+        67,
+        70,
+        71,
+        65,
+        67,
+        73,
+        76,
+        79,
+        82,
+        82,
+        84
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Multi-Agent%20System&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Multi-Agent%20System"
+        }
+      ]
+    },
+    {
+      "id": "agent-memory",
+      "name": "Agent Memory",
+      "category": "智能体Agent",
+      "x": 63.6,
+      "y": 61.2,
+      "heat": 67,
+      "first_appear": "2023-05",
+      "definition": "为智能体保存长期偏好、上下文和任务经验的记忆机制。",
+      "heat_history": [
+        61,
+        61,
+        53,
+        53,
+        57,
+        59,
+        62,
+        65,
+        65,
+        68,
+        67,
+        69,
+        70,
+        70,
+        77,
+        76,
+        74,
+        72,
+        70,
+        67,
+        62,
+        61,
+        66,
+        59,
+        62,
+        64,
+        64,
+        67,
+        73,
+        76
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Agent%20Memory&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Agent%20Memory"
+        }
+      ]
+    },
+    {
+      "id": "autonomous-workflow",
+      "name": "Autonomous Workflow",
+      "category": "智能体Agent",
+      "x": 83,
+      "y": 75.8,
+      "heat": 78,
+      "first_appear": "2023-06",
+      "definition": "由 AI 自动串联工具与步骤完成业务流程的工作流形态。",
+      "heat_history": [
+        76,
+        83,
+        80,
+        78,
+        75,
+        73,
+        71,
+        69,
+        69,
+        69,
+        73,
+        75,
+        76,
+        79,
+        76,
+        79,
+        87,
+        89,
+        83,
+        83,
+        83,
+        81,
+        79,
+        77,
+        82,
+        80,
+        78,
+        76,
+        77,
+        77
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Autonomous%20Workflow&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Autonomous%20Workflow"
+        }
+      ]
+    },
+    {
+      "id": "computer-use-agent",
+      "name": "Computer Use Agent",
+      "category": "智能体Agent",
+      "x": 59.2,
+      "y": 74.8,
+      "heat": 82,
+      "first_appear": "2024-10",
+      "definition": "能够观察屏幕、操作应用并完成电脑任务的智能体。",
+      "heat_history": [
+        75,
+        77,
+        79,
+        81,
+        79,
+        82,
+        85,
+        87,
+        85,
+        87,
+        91,
+        90,
+        88,
+        85,
+        82,
+        80,
+        77,
+        75,
+        73,
+        72,
+        79,
+        72,
+        80,
+        83,
+        80,
+        82,
+        83,
+        85,
+        89,
+        90
+      ],
+      "relations": [
+        {
+          "target": "autonomous-workflow",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Computer%20Use%20Agent&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Computer%20Use%20Agent"
+        }
+      ]
+    },
+    {
+      "id": "browser-agent",
+      "name": "Browser Agent",
+      "category": "智能体Agent",
+      "x": 65.8,
+      "y": 86.4,
+      "heat": 77,
+      "first_appear": "2023-08",
+      "definition": "可以浏览网页、填写表单和执行在线任务的智能体。",
+      "heat_history": [
+        80,
+        81,
+        83,
+        83,
+        79,
+        77,
+        77,
+        75,
+        70,
+        75,
+        69,
+        69,
+        69,
+        70,
+        67,
+        70,
+        72,
+        75,
+        83,
+        78,
+        86,
+        86,
+        89,
+        88,
+        84,
+        83,
+        83,
+        80,
+        75,
+        73
+      ],
+      "relations": [
+        {
+          "target": "ai-search",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Browser%20Agent&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Browser%20Agent"
+        }
+      ]
+    },
+    {
+      "id": "code-agent",
+      "name": "Code Agent",
+      "category": "智能体Agent",
+      "x": 85.2,
+      "y": 68,
+      "heat": 85,
+      "first_appear": "2023-03",
+      "definition": "面向代码阅读、修改、测试和软件任务自动化的智能体。",
+      "heat_history": [
+        81,
+        79,
+        76,
+        76,
+        73,
+        74,
+        82,
+        84,
+        84,
+        87,
+        89,
+        90,
+        94,
+        95,
+        92,
+        91,
+        92,
+        90,
+        85,
+        83,
+        84,
+        83,
+        82,
+        82,
+        77,
+        78,
+        79,
+        81,
+        81,
+        84
+      ],
+      "relations": [
+        {
+          "target": "ai-coding",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Code%20Agent&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Code%20Agent"
+        }
+      ]
+    },
+    {
+      "id": "agent-evaluation",
+      "name": "Agent Evaluation",
+      "category": "智能体Agent",
+      "x": 42,
+      "y": 65,
+      "heat": 66,
+      "first_appear": "2023-09",
+      "definition": "评估智能体任务完成率、工具调用质量和长期可靠性的体系。",
+      "heat_history": [
+        64,
+        70,
+        62,
+        59,
+        62,
+        60,
+        61,
+        60,
+        58,
+        58,
+        62,
+        65,
+        68,
+        71,
+        69,
+        71,
+        73,
+        74,
+        71,
+        71,
+        69,
+        66,
+        66,
+        64,
+        67,
+        62,
+        58,
+        65,
+        59,
+        60
+      ],
+      "relations": [
+        {
+          "target": "ai-agent",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Agent%20Evaluation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Agent%20Evaluation"
+        }
+      ]
+    },
+    {
+      "id": "rag",
+      "name": "RAG",
+      "category": "RAG与检索",
+      "x": 86.8,
+      "y": 51.2,
+      "heat": 88,
+      "first_appear": "2020-05",
+      "definition": "检索外部知识并注入生成模型上下文，以提升回答准确性的架构。",
+      "heat_history": [
+        90,
+        88,
+        86,
+        83,
+        81,
+        78,
+        77,
+        83,
+        76,
+        76,
+        84,
+        86,
+        87,
+        90,
+        87,
+        90,
+        90,
+        92,
+        96,
+        96,
+        91,
+        98,
+        95,
+        93,
+        90,
+        88,
+        86,
+        84,
+        84,
+        83
+      ],
+      "relations": [
+        {
+          "target": "vector-database",
+          "type": "contains"
+        },
+        {
+          "target": "embedding-model",
+          "type": "contains"
+        },
+        {
+          "target": "reranking",
+          "type": "contains"
+        },
+        {
+          "target": "retrieval-evaluation",
+          "type": "contains"
+        },
+        {
+          "target": "ai-search",
+          "type": "applies"
+        },
+        {
+          "target": "ai-customer-service",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=RAG&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=RAG"
+        }
+      ]
+    },
+    {
+      "id": "vector-database",
+      "name": "Vector Database",
+      "category": "RAG与检索",
+      "x": 90.4,
+      "y": 38.6,
+      "heat": 80,
+      "first_appear": "2019-01",
+      "definition": "面向向量相似度搜索和语义检索优化的数据库。",
+      "heat_history": [
+        70,
+        72,
+        79,
+        74,
+        82,
+        85,
+        85,
+        87,
+        88,
+        89,
+        86,
+        84,
+        84,
+        82,
+        77,
+        82,
+        74,
+        71,
+        77,
+        76,
+        74,
+        75,
+        77,
+        80,
+        78,
+        80,
+        83,
+        85,
+        90,
+        83
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Vector%20Database&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Vector%20Database"
+        }
+      ]
+    },
+    {
+      "id": "embedding-model",
+      "name": "Embedding Model",
+      "category": "RAG与检索",
+      "x": 86.4,
+      "y": 34.4,
+      "heat": 80,
+      "first_appear": "2013-01",
+      "definition": "将文本、图像或其他内容转换为语义向量的模型。",
+      "heat_history": [
+        91,
+        92,
+        93,
+        85,
+        87,
+        86,
+        85,
+        83,
+        77,
+        75,
+        73,
+        72,
+        70,
+        70,
+        78,
+        79,
+        80,
+        81,
+        85,
+        86,
+        88,
+        89,
+        88,
+        88,
+        82,
+        81,
+        77,
+        75,
+        80,
+        70
+      ],
+      "relations": [
+        {
+          "target": "semantic-search",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Embedding%20Model&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Embedding%20Model"
+        }
+      ]
+    },
+    {
+      "id": "semantic-search",
+      "name": "Semantic Search",
+      "category": "RAG与检索",
+      "x": 90.8,
+      "y": 50.8,
+      "heat": 72,
+      "first_appear": "2018-01",
+      "definition": "基于语义相似度而非关键词匹配的搜索方式。",
+      "heat_history": [
+        66,
+        65,
+        62,
+        62,
+        61,
+        62,
+        70,
+        73,
+        73,
+        76,
+        78,
+        79,
+        82,
+        82,
+        79,
+        77,
+        78,
+        75,
+        70,
+        67,
+        69,
+        68,
+        68,
+        68,
+        64,
+        66,
+        68,
+        70,
+        70,
+        73
+      ],
+      "relations": [
+        {
+          "target": "hybrid-search",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Semantic%20Search&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Semantic%20Search"
+        }
+      ]
+    },
+    {
+      "id": "hybrid-search",
+      "name": "Hybrid Search",
+      "category": "RAG与检索",
+      "x": 81.6,
+      "y": 51.6,
+      "heat": 70,
+      "first_appear": "2022-01",
+      "definition": "融合关键词、向量和结构化过滤的检索策略。",
+      "heat_history": [
+        66,
+        65,
+        63,
+        62,
+        65,
+        64,
+        65,
+        66,
+        62,
+        65,
+        64,
+        65,
+        75,
+        77,
+        78,
+        78,
+        78,
+        78,
+        78,
+        76,
+        74,
+        73,
+        69,
+        67,
+        69,
+        69,
+        67,
+        68,
+        70,
+        64
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Hybrid%20Search&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Hybrid%20Search"
+        }
+      ]
+    },
+    {
+      "id": "reranking",
+      "name": "Reranking",
+      "category": "RAG与检索",
+      "x": 82,
+      "y": 43.4,
+      "heat": 71,
+      "first_appear": "2020-01",
+      "definition": "对召回结果重新排序，以提高最终上下文质量。",
+      "heat_history": [
+        57,
+        59,
+        60,
+        63,
+        69,
+        64,
+        67,
+        70,
+        76,
+        78,
+        73,
+        80,
+        79,
+        77,
+        75,
+        73,
+        70,
+        68,
+        68,
+        66,
+        66,
+        67,
+        66,
+        68,
+        74,
+        77,
+        77,
+        80,
+        84,
+        86
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Reranking&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Reranking"
+        }
+      ]
+    },
+    {
+      "id": "knowledge-graph",
+      "name": "Knowledge Graph",
+      "category": "RAG与检索",
+      "x": 74.8,
+      "y": 40.8,
+      "heat": 62,
+      "first_appear": "2012-05",
+      "definition": "用实体和关系组织知识的结构化知识表示。",
+      "heat_history": [
+        68,
+        67,
+        65,
+        63,
+        65,
+        63,
+        54,
+        54,
+        59,
+        59,
+        59,
+        60,
+        61,
+        62,
+        63,
+        65,
+        65,
+        66,
+        65,
+        64,
+        68,
+        67,
+        63,
+        61,
+        62,
+        60,
+        57,
+        56,
+        50,
+        51
+      ],
+      "relations": [
+        {
+          "target": "graph-rag",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Knowledge%20Graph&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Knowledge%20Graph"
+        }
+      ]
+    },
+    {
+      "id": "graph-rag",
+      "name": "Graph RAG",
+      "category": "RAG与检索",
+      "x": 60.4,
+      "y": 45.8,
+      "heat": 77,
+      "first_appear": "2024-02",
+      "definition": "结合知识图谱或实体关系结构进行增强检索的 RAG 形态。",
+      "heat_history": [
+        74,
+        74,
+        72,
+        74,
+        73,
+        76,
+        76,
+        78,
+        78,
+        80,
+        87,
+        86,
+        88,
+        86,
+        82,
+        79,
+        78,
+        75,
+        70,
+        68,
+        70,
+        70,
+        71,
+        72,
+        69,
+        72,
+        74,
+        77,
+        76,
+        78
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Graph%20RAG&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Graph%20RAG"
+        }
+      ]
+    },
+    {
+      "id": "long-context",
+      "name": "Long Context",
+      "category": "RAG与检索",
+      "x": 72,
+      "y": 41.4,
+      "heat": 85,
+      "first_appear": "2023-03",
+      "definition": "让模型在一次推理中处理更长文本、代码或多模态上下文的能力。",
+      "heat_history": [
+        85,
+        86,
+        95,
+        96,
+        92,
+        91,
+        90,
+        87,
+        88,
+        85,
+        81,
+        79,
+        76,
+        75,
+        81,
+        82,
+        81,
+        83,
+        83,
+        86,
+        88,
+        90,
+        91,
+        91,
+        88,
+        95,
+        93,
+        91,
+        83,
+        81
+      ],
+      "relations": [
+        {
+          "target": "rag",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Long%20Context&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Long%20Context"
+        }
+      ]
+    },
+    {
+      "id": "retrieval-evaluation",
+      "name": "Retrieval Evaluation",
+      "category": "RAG与检索",
+      "x": 70,
+      "y": 46.8,
+      "heat": 61,
+      "first_appear": "2023-09",
+      "definition": "评估检索召回、排序和上下文有效性的指标与流程。",
+      "heat_history": [
+        71,
+        70,
+        66,
+        64,
+        60,
+        59,
+        55,
+        54,
+        54,
+        55,
+        54,
+        54,
+        58,
+        59,
+        66,
+        67,
+        63,
+        71,
+        64,
+        69,
+        65,
+        64,
+        63,
+        61,
+        55,
+        53,
+        52,
+        51,
+        54,
+        55
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Retrieval%20Evaluation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Retrieval%20Evaluation"
+        }
+      ]
+    },
+    {
+      "id": "ai-alignment",
+      "name": "AI Alignment",
+      "category": "AI安全与对齐",
+      "x": 43.6,
+      "y": 42.4,
+      "heat": 83,
+      "first_appear": "2016-01",
+      "definition": "使 AI 系统目标、行为和人类价值保持一致的研究方向。",
+      "heat_history": [
+        86,
+        92,
+        85,
+        82,
+        85,
+        82,
+        82,
+        80,
+        78,
+        77,
+        78,
+        79,
+        81,
+        84,
+        82,
+        84,
+        87,
+        89,
+        86,
+        87,
+        92,
+        90,
+        90,
+        88,
+        83,
+        80,
+        80,
+        78,
+        75,
+        74
+      ],
+      "relations": [
+        {
+          "target": "rlhf",
+          "type": "applies"
+        },
+        {
+          "target": "constitutional-ai",
+          "type": "derives"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Alignment&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Alignment"
+        }
+      ]
+    },
+    {
+      "id": "red-teaming",
+      "name": "Red Teaming",
+      "category": "AI安全与对齐",
+      "x": 72,
+      "y": 42.8,
+      "heat": 75,
+      "first_appear": "2022-01",
+      "definition": "通过系统性攻击和压力测试发现模型风险与漏洞。",
+      "heat_history": [
+        68,
+        70,
+        72,
+        75,
+        78,
+        72,
+        75,
+        77,
+        79,
+        80,
+        80,
+        79,
+        77,
+        74,
+        77,
+        74,
+        71,
+        69,
+        72,
+        71,
+        70,
+        71,
+        71,
+        74,
+        74,
+        77,
+        77,
+        79,
+        81,
+        82
+      ],
+      "relations": [
+        {
+          "target": "model-evaluation",
+          "type": "contains"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Red%20Teaming&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Red%20Teaming"
+        }
+      ]
+    },
+    {
+      "id": "guardrails",
+      "name": "Guardrails",
+      "category": "AI安全与对齐",
+      "x": 80.4,
+      "y": 60.2,
+      "heat": 75,
+      "first_appear": "2023-01",
+      "definition": "限制模型输出范围、格式和安全边界的工程机制。",
+      "heat_history": [
+        84,
+        82,
+        82,
+        79,
+        74,
+        71,
+        71,
+        70,
+        68,
+        68,
+        73,
+        75,
+        69,
+        72,
+        78,
+        80,
+        82,
+        84,
+        80,
+        80,
+        82,
+        80,
+        74,
+        71,
+        71,
+        69,
+        69,
+        67,
+        68,
+        67
+      ],
+      "relations": [
+        {
+          "target": "secure-sandboxing",
+          "type": "contains"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Guardrails&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Guardrails"
+        }
+      ]
+    },
+    {
+      "id": "constitutional-ai",
+      "name": "Constitutional AI",
+      "category": "AI安全与对齐",
+      "x": 54,
+      "y": 49,
+      "heat": 66,
+      "first_appear": "2022-12",
+      "definition": "用明确原则指导模型自我批判和修正的对齐方法。",
+      "heat_history": [
+        69,
+        72,
+        72,
+        74,
+        73,
+        73,
+        71,
+        71,
+        69,
+        67,
+        67,
+        64,
+        64,
+        61,
+        57,
+        56,
+        58,
+        58,
+        58,
+        59,
+        64,
+        67,
+        69,
+        71,
+        68,
+        69,
+        69,
+        69,
+        71,
+        69
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Constitutional%20AI&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Constitutional%20AI"
+        }
+      ]
+    },
+    {
+      "id": "hallucination-detection",
+      "name": "Hallucination Detection",
+      "category": "AI安全与对齐",
+      "x": 71.6,
+      "y": 55.6,
+      "heat": 77,
+      "first_appear": "2023-01",
+      "definition": "识别模型编造事实、引用或推理错误的检测技术。",
+      "heat_history": [
+        84,
+        85,
+        83,
+        82,
+        87,
+        77,
+        81,
+        79,
+        75,
+        74,
+        74,
+        73,
+        74,
+        75,
+        73,
+        74,
+        78,
+        79,
+        84,
+        84,
+        81,
+        82,
+        82,
+        82,
+        84,
+        74,
+        72,
+        71,
+        74,
+        73
+      ],
+      "relations": [
+        {
+          "target": "rag",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Hallucination%20Detection&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Hallucination%20Detection"
+        }
+      ]
+    },
+    {
+      "id": "model-evaluation",
+      "name": "Model Evaluation",
+      "category": "AI安全与对齐",
+      "x": 80.4,
+      "y": 37.2,
+      "heat": 81,
+      "first_appear": "2019-01",
+      "definition": "用基准、人工评估和业务指标衡量模型能力与风险。",
+      "heat_history": [
+        79,
+        77,
+        77,
+        76,
+        71,
+        79,
+        74,
+        76,
+        78,
+        79,
+        85,
+        87,
+        89,
+        90,
+        90,
+        90,
+        89,
+        80,
+        84,
+        83,
+        78,
+        76,
+        76,
+        75,
+        77,
+        78,
+        73,
+        82,
+        78,
+        80
+      ],
+      "relations": [
+        {
+          "target": "agent-evaluation",
+          "type": "applies"
+        },
+        {
+          "target": "ai-finance",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Model%20Evaluation&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Model%20Evaluation"
+        }
+      ]
+    },
+    {
+      "id": "interpretability",
+      "name": "Interpretability",
+      "category": "AI安全与对齐",
+      "x": 37,
+      "y": 25.4,
+      "heat": 68,
+      "first_appear": "2016-01",
+      "definition": "理解模型内部表示、决策机制和行为原因的研究方向。",
+      "heat_history": [
+        71,
+        70,
+        65,
+        64,
+        68,
+        67,
+        64,
+        64,
+        64,
+        66,
+        65,
+        67,
+        70,
+        72,
+        71,
+        72,
+        74,
+        74,
+        73,
+        71,
+        75,
+        74,
+        64,
+        62,
+        64,
+        63,
+        62,
+        63,
+        58,
+        60
+      ],
+      "relations": [
+        {
+          "target": "ai-alignment",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Interpretability&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Interpretability"
+        }
+      ]
+    },
+    {
+      "id": "watermarking",
+      "name": "Watermarking",
+      "category": "AI安全与对齐",
+      "x": 62,
+      "y": 49.4,
+      "heat": 58,
+      "first_appear": "2022-11",
+      "definition": "为 AI 生成内容嵌入可检测标记的技术。",
+      "heat_history": [
+        67,
+        65,
+        57,
+        62,
+        53,
+        51,
+        51,
+        50,
+        49,
+        49,
+        50,
+        52,
+        54,
+        57,
+        60,
+        63,
+        65,
+        66,
+        66,
+        66,
+        68,
+        65,
+        57,
+        55,
+        54,
+        52,
+        52,
+        50,
+        52,
+        51
+      ],
+      "relations": [
+        {
+          "target": "text-to-image",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Watermarking&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Watermarking"
+        }
+      ]
+    },
+    {
+      "id": "privacy-preserving-ai",
+      "name": "Privacy-Preserving AI",
+      "category": "AI安全与对齐",
+      "x": 66.8,
+      "y": 36.2,
+      "heat": 65,
+      "first_appear": "2017-01",
+      "definition": "在保护数据隐私的前提下训练或部署 AI 的技术集合。",
+      "heat_history": [
+        73,
+        64,
+        63,
+        62,
+        63,
+        62,
+        61,
+        61,
+        56,
+        57,
+        56,
+        57,
+        66,
+        68,
+        69,
+        71,
+        72,
+        72,
+        74,
+        73,
+        72,
+        71,
+        67,
+        66,
+        67,
+        66,
+        62,
+        62,
+        63,
+        56
+      ],
+      "relations": [
+        {
+          "target": "ai-healthcare",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Privacy-Preserving%20AI&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Privacy-Preserving%20AI"
+        }
+      ]
+    },
+    {
+      "id": "secure-sandboxing",
+      "name": "Secure Sandboxing",
+      "category": "AI安全与对齐",
+      "x": 79.2,
+      "y": 47.2,
+      "heat": 68,
+      "first_appear": "2023-06",
+      "definition": "把模型工具调用限制在受控环境中，以降低执行风险。",
+      "heat_history": [
+        65,
+        64,
+        64,
+        64,
+        65,
+        66,
+        68,
+        63,
+        65,
+        68,
+        70,
+        71,
+        71,
+        79,
+        75,
+        73,
+        71,
+        68,
+        71,
+        68,
+        65,
+        64,
+        61,
+        61,
+        59,
+        61,
+        60,
+        63,
+        65,
+        67
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Secure%20Sandboxing&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Secure%20Sandboxing"
+        }
+      ]
+    },
+    {
+      "id": "pytorch",
+      "name": "PyTorch",
+      "category": "开发框架与工具",
+      "x": 93.2,
+      "y": 18.6,
+      "heat": 82,
+      "first_appear": "2016-09",
+      "definition": "主流深度学习框架，广泛用于研究、训练和模型部署。",
+      "heat_history": [
+        86,
+        88,
+        87,
+        87,
+        82,
+        81,
+        78,
+        76,
+        76,
+        75,
+        75,
+        73,
+        75,
+        75,
+        78,
+        80,
+        84,
+        86,
+        82,
+        83,
+        88,
+        90,
+        92,
+        93,
+        93,
+        92,
+        91,
+        90,
+        87,
+        86
+      ],
+      "relations": [
+        {
+          "target": "huggingface-transformers",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=PyTorch&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=PyTorch"
+        }
+      ]
+    },
+    {
+      "id": "tensorflow",
+      "name": "TensorFlow",
+      "category": "开发框架与工具",
+      "x": 95.2,
+      "y": 24.8,
+      "heat": 67,
+      "first_appear": "2015-11",
+      "definition": "面向机器学习训练与部署的端到端框架。",
+      "heat_history": [
+        70,
+        70,
+        67,
+        66,
+        67,
+        66,
+        62,
+        61,
+        56,
+        56,
+        62,
+        63,
+        58,
+        68,
+        64,
+        66,
+        70,
+        71,
+        72,
+        72,
+        74,
+        74,
+        73,
+        72,
+        71,
+        69,
+        68,
+        68,
+        67,
+        60
+      ],
+      "relations": [
+        {
+          "target": "onnx",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=TensorFlow&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=TensorFlow"
+        }
+      ]
+    },
+    {
+      "id": "jax",
+      "name": "JAX",
+      "category": "开发框架与工具",
+      "x": 74,
+      "y": 13.2,
+      "heat": 57,
+      "first_appear": "2018-12",
+      "definition": "结合自动微分和高性能编译的数值计算框架。",
+      "heat_history": [
+        63,
+        64,
+        61,
+        60,
+        61,
+        59,
+        55,
+        54,
+        53,
+        53,
+        51,
+        51,
+        53,
+        54,
+        58,
+        59,
+        55,
+        64,
+        60,
+        60,
+        66,
+        66,
+        66,
+        57,
+        56,
+        54,
+        52,
+        51,
+        48,
+        47
+      ],
+      "relations": [
+        {
+          "target": "mamba",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=JAX&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=JAX"
+        }
+      ]
+    },
+    {
+      "id": "huggingface-transformers",
+      "name": "Hugging Face Transformers",
+      "category": "开发框架与工具",
+      "x": 92.8,
+      "y": 41,
+      "heat": 86,
+      "first_appear": "2019-06",
+      "definition": "提供预训练模型、分词器和推理工具的开源生态。",
+      "heat_history": [
+        89,
+        88,
+        85,
+        83,
+        87,
+        86,
+        82,
+        82,
+        80,
+        81,
+        77,
+        85,
+        81,
+        83,
+        90,
+        91,
+        95,
+        95,
+        92,
+        92,
+        91,
+        90,
+        88,
+        87,
+        80,
+        79,
+        78,
+        78,
+        77,
+        78
+      ],
+      "relations": [
+        {
+          "target": "lora",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=Hugging%20Face%20Transformers&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=Hugging%20Face%20Transformers"
+        }
+      ]
+    },
+    {
+      "id": "langchain",
+      "name": "LangChain",
+      "category": "开发框架与工具",
+      "x": 89.2,
+      "y": 52.6,
+      "heat": 79,
+      "first_appear": "2022-10",
+      "definition": "用于构建 LLM 应用、RAG 和智能体流程的开发框架。",
+      "heat_history": [
+        75,
+        74,
+        73,
+        73,
+        73,
+        74,
+        76,
+        78,
+        72,
+        75,
+        80,
+        81,
+        82,
+        83,
+        88,
+        87,
+        86,
+        84,
+        78,
+        83,
+        81,
+        79,
+        76,
+        76,
+        73,
+        74,
+        73,
+        75,
+        77,
+        80
+      ],
+      "relations": [
+        {
+          "target": "ai-agent",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=LangChain&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=LangChain"
+        }
+      ]
+    },
+    {
+      "id": "llamaindex",
+      "name": "LlamaIndex",
+      "category": "开发框架与工具",
+      "x": 78.8,
+      "y": 45.8,
+      "heat": 75,
+      "first_appear": "2022-11",
+      "definition": "面向数据连接、索引和 RAG 应用的开发框架。",
+      "heat_history": [
+        83,
+        85,
+        86,
+        79,
+        83,
+        82,
+        81,
+        80,
+        75,
+        73,
+        69,
+        67,
+        65,
+        72,
+        71,
+        72,
+        72,
+        74,
+        75,
+        77,
+        77,
+        79,
+        79,
+        79,
+        82,
+        82,
+        78,
+        77,
+        78,
+        68
+      ],
+      "relations": [
+        {
+          "target": "rag",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=LlamaIndex&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=LlamaIndex"
+        }
+      ]
+    },
+    {
+      "id": "onnx",
+      "name": "ONNX",
+      "category": "开发框架与工具",
+      "x": 84.8,
+      "y": 11.4,
+      "heat": 56,
+      "first_appear": "2017-09",
+      "definition": "用于模型跨框架交换和部署的开放格式。",
+      "heat_history": [
+        54,
+        53,
+        52,
+        51,
+        51,
+        52,
+        54,
+        55,
+        58,
+        60,
+        62,
+        63,
+        64,
+        64,
+        61,
+        60,
+        58,
+        64,
+        58,
+        55,
+        52,
+        51,
+        47,
+        46,
+        44,
+        45,
+        51,
+        53,
+        55,
+        50
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=ONNX&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=ONNX"
+        }
+      ]
+    },
+    {
+      "id": "openai-api",
+      "name": "OpenAI API",
+      "category": "开发框架与工具",
+      "x": 97,
+      "y": 59.8,
+      "heat": 87,
+      "first_appear": "2020-06",
+      "definition": "通过云端接口调用模型能力并构建 AI 应用的服务。",
+      "heat_history": [
+        83,
+        82,
+        81,
+        80,
+        81,
+        82,
+        83,
+        85,
+        86,
+        89,
+        92,
+        93,
+        94,
+        95,
+        92,
+        91,
+        89,
+        95,
+        88,
+        85,
+        84,
+        83,
+        79,
+        79,
+        76,
+        77,
+        84,
+        86,
+        86,
+        89
+      ],
+      "relations": [
+        {
+          "target": "function-calling",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=OpenAI%20API&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=OpenAI%20API"
+        }
+      ]
+    },
+    {
+      "id": "cuda",
+      "name": "CUDA",
+      "category": "开发框架与工具",
+      "x": 96,
+      "y": 17,
+      "heat": 69,
+      "first_appear": "2007-06",
+      "definition": "NVIDIA GPU 通用计算平台，是深度学习训练和推理的重要基础。",
+      "heat_history": [
+        73,
+        72,
+        71,
+        70,
+        61,
+        59,
+        59,
+        59,
+        59,
+        60,
+        62,
+        63,
+        65,
+        66,
+        73,
+        75,
+        76,
+        77,
+        74,
+        73,
+        80,
+        71,
+        76,
+        74,
+        71,
+        69,
+        66,
+        66,
+        66,
+        67
+      ],
+      "relations": [
+        {
+          "target": "pytorch",
+          "type": "optimizes"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=CUDA&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=CUDA"
+        }
+      ]
+    },
+    {
+      "id": "mlops",
+      "name": "MLOps",
+      "category": "开发框架与工具",
+      "x": 82.4,
+      "y": 40,
+      "heat": 68,
+      "first_appear": "2018-01",
+      "definition": "围绕模型开发、部署、监控和迭代的工程流程体系。",
+      "heat_history": [
+        73,
+        74,
+        71,
+        71,
+        67,
+        66,
+        62,
+        61,
+        58,
+        57,
+        56,
+        64,
+        59,
+        60,
+        67,
+        69,
+        73,
+        75,
+        74,
+        74,
+        76,
+        77,
+        77,
+        76,
+        70,
+        69,
+        68,
+        66,
+        65,
+        65
+      ],
+      "relations": [
+        {
+          "target": "model-evaluation",
+          "type": "applies"
+        }
+      ],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=MLOps&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=MLOps"
+        }
+      ]
+    },
+    {
+      "id": "ai-copilot",
+      "name": "AI Copilot",
+      "category": "行业应用场景",
+      "x": 91.2,
+      "y": 87.6,
+      "heat": 85,
+      "first_appear": "2021-06",
+      "definition": "嵌入办公、设计、开发等工作流中的 AI 辅助助手。",
+      "heat_history": [
+        76,
+        76,
+        75,
+        76,
+        77,
+        79,
+        82,
+        76,
+        86,
+        89,
+        90,
+        91,
+        92,
+        92,
+        88,
+        87,
+        93,
+        91,
+        84,
+        81,
+        80,
+        79,
+        84,
+        77,
+        84,
+        85,
+        85,
+        88,
+        89,
+        92
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Copilot&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Copilot"
+        }
+      ]
+    },
+    {
+      "id": "ai-search",
+      "name": "AI Search",
+      "category": "行业应用场景",
+      "x": 92,
+      "y": 78,
+      "heat": 84,
+      "first_appear": "2023-02",
+      "definition": "结合生成式回答、语义检索和来源引用的新型搜索体验。",
+      "heat_history": [
+        91,
+        85,
+        88,
+        89,
+        90,
+        90,
+        90,
+        89,
+        87,
+        86,
+        80,
+        78,
+        76,
+        74,
+        78,
+        77,
+        78,
+        78,
+        84,
+        86,
+        87,
+        90,
+        90,
+        91,
+        90,
+        90,
+        87,
+        86,
+        84,
+        83
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Search&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Search"
+        }
+      ]
+    },
+    {
+      "id": "ai-coding",
+      "name": "AI Coding",
+      "category": "行业应用场景",
+      "x": 94,
+      "y": 67,
+      "heat": 88,
+      "first_appear": "2021-06",
+      "definition": "用 AI 辅助代码生成、理解、调试、测试和重构的软件开发场景。",
+      "heat_history": [
+        84,
+        85,
+        84,
+        86,
+        90,
+        93,
+        93,
+        96,
+        92,
+        94,
+        99,
+        98,
+        91,
+        96,
+        88,
+        85,
+        85,
+        82,
+        80,
+        78,
+        81,
+        82,
+        83,
+        85,
+        88,
+        82,
+        85,
+        87,
+        89,
+        91
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Coding&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Coding"
+        }
+      ]
+    },
+    {
+      "id": "ai-healthcare",
+      "name": "AI Healthcare",
+      "category": "行业应用场景",
+      "x": 68,
+      "y": 84.6,
+      "heat": 73,
+      "first_appear": "2017-01",
+      "definition": "AI 在医学影像、临床辅助、药物研发和健康管理中的应用。",
+      "heat_history": [
+        71,
+        71,
+        71,
+        73,
+        71,
+        80,
+        81,
+        82,
+        79,
+        79,
+        77,
+        77,
+        82,
+        72,
+        76,
+        74,
+        70,
+        69,
+        68,
+        68,
+        67,
+        67,
+        67,
+        69,
+        75,
+        76,
+        77,
+        78,
+        76,
+        75
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Healthcare&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Healthcare"
+        }
+      ]
+    },
+    {
+      "id": "ai-finance",
+      "name": "AI Finance",
+      "category": "行业应用场景",
+      "x": 79.6,
+      "y": 89.6,
+      "heat": 69,
+      "first_appear": "2016-01",
+      "definition": "AI 在风控、投研、客服、合规和自动化运营中的金融应用。",
+      "heat_history": [
+        60,
+        60,
+        58,
+        59,
+        58,
+        61,
+        61,
+        64,
+        65,
+        68,
+        77,
+        77,
+        72,
+        71,
+        76,
+        74,
+        74,
+        72,
+        67,
+        65,
+        67,
+        67,
+        67,
+        69,
+        65,
+        68,
+        71,
+        74,
+        74,
+        77
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Finance&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Finance"
+        }
+      ]
+    },
+    {
+      "id": "ai-education",
+      "name": "AI Education",
+      "category": "行业应用场景",
+      "x": 81.4,
+      "y": 88,
+      "heat": 77,
+      "first_appear": "2020-01",
+      "definition": "面向学习陪伴、个性化练习和教学辅助的 AI 应用场景。",
+      "heat_history": [
+        76,
+        75,
+        71,
+        70,
+        71,
+        71,
+        68,
+        69,
+        71,
+        72,
+        72,
+        73,
+        78,
+        80,
+        84,
+        85,
+        80,
+        88,
+        82,
+        81,
+        85,
+        85,
+        83,
+        74,
+        73,
+        72,
+        72,
+        73,
+        72,
+        74
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Education&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Education"
+        }
+      ]
+    },
+    {
+      "id": "ai-customer-service",
+      "name": "AI Customer Service",
+      "category": "行业应用场景",
+      "x": 87.8,
+      "y": 87.2,
+      "heat": 76,
+      "first_appear": "2018-01",
+      "definition": "用对话模型和工作流自动处理咨询、售后和运营服务。",
+      "heat_history": [
+        73,
+        72,
+        69,
+        69,
+        67,
+        68,
+        67,
+        70,
+        70,
+        73,
+        78,
+        80,
+        83,
+        84,
+        82,
+        81,
+        82,
+        80,
+        75,
+        81,
+        74,
+        72,
+        72,
+        71,
+        75,
+        68,
+        70,
+        72,
+        80,
+        83
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Customer%20Service&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Customer%20Service"
+        }
+      ]
+    },
+    {
+      "id": "ai-robotics",
+      "name": "AI Robotics",
+      "category": "行业应用场景",
+      "x": 67.6,
+      "y": 92,
+      "heat": 80,
+      "first_appear": "2022-01",
+      "definition": "将多模态感知、规划和动作控制用于机器人任务的应用方向。",
+      "heat_history": [
+        86,
+        86,
+        87,
+        86,
+        86,
+        84,
+        83,
+        80,
+        72,
+        78,
+        70,
+        71,
+        71,
+        73,
+        75,
+        78,
+        80,
+        83,
+        86,
+        88,
+        87,
+        86,
+        88,
+        86,
+        87,
+        84,
+        84,
+        81,
+        79,
+        77
+      ],
+      "relations": [],
+      "references": [
+        {
+          "label": "arXiv",
+          "url": "https://arxiv.org/search/?query=AI%20Robotics&searchtype=all"
+        },
+        {
+          "label": "Semantic Scholar",
+          "url": "https://www.semanticscholar.org/search?q=AI%20Robotics"
+        }
+      ]
+    }
+  ]
+}
