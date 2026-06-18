@@ -938,6 +938,7 @@ a.model-pill:hover {
   left: 296px;
   top: 132px;
   z-index: 7;
+  display: none;
   max-width: min(360px, 42vw);
   pointer-events: none;
 }
@@ -962,7 +963,7 @@ a.model-pill:hover {
   left: 60%;
   top: 94px;
   z-index: 8;
-  display: grid;
+  display: none;
   justify-items: center;
   width: min(340px, 30vw);
   padding: 10px 16px 11px;
