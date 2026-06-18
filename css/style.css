@@ -981,6 +981,48 @@ a.model-pill:hover {
   pointer-events: none;
 }
 
+.atlas-city-label {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 138px;
+  padding: 4px 9px;
+  overflow: hidden;
+  border: 1px solid rgba(214, 226, 255, 0.16);
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(15, 22, 42, 0.74), rgba(6, 8, 16, 0.54));
+  color: rgba(244, 247, 255, 0.82);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.94);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.92);
+  box-shadow: 0 0 20px rgba(116, 192, 252, 0.14), 0 10px 32px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.atlas-city-label::before {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  content: "";
+  border-radius: 999px;
+  background: #74c0fc;
+  box-shadow: 0 0 14px #74c0fc;
+}
+
+.atlas-city-label.is-visible {
+  opacity: 0.92;
+  transform: translate(-50%, -50%);
+}
+
 .atlas-node {
   position: absolute;
   display: grid;

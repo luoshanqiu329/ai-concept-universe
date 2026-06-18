@@ -158,6 +158,7 @@
     atlasPointer: new THREE.Vector2(),
     atlasNodeMeshes: new Map(),
     atlasLabelEntries: [],
+    atlasCityLabelEntries: [],
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -894,6 +895,7 @@
     if (!dynamicDom.atlasLayer || state.viewMode !== "atlas") {
       state.atlasItems = [];
       state.atlasLabelEntries = [];
+      state.atlasCityLabelEntries = [];
       return;
     }
 
@@ -914,7 +916,24 @@
     clearThreeGroup(state.atlasLineGroup);
     state.atlasNodeMeshes.clear();
     const anchors = new Map();
-    dynamicDom.atlasNodes.innerHTML = visibleItems
+
+    const cityEntries = Array.from(cityGroups.entries())
+      .map(([city, entries]) => {
+        const heat = Math.max(...entries.map((entry) => entry.item.heat || 50));
+        const location = entries[0].location;
+        const anchor = globePosition(location, GLOBE_RADIUS + 3.6);
+        const lead = entries.slice().sort((a, b) => kindRank(a.item.kind) - kindRank(b.item.kind) || b.item.heat - a.item.heat)[0];
+        addAtlasCityGlow(entries, anchor, itemColor(lead.item).getStyle());
+        return { city, entries, heat, location, anchor };
+      })
+      .sort((a, b) => b.entries.length - a.entries.length || b.heat - a.heat)
+      .slice(0, 9);
+
+    const cityHtml = cityEntries
+      .map((entry) => `<span class="atlas-city-label" title="${escapeHtml(entry.location.label || entry.city)}">${escapeHtml(entry.location.label || entry.city)} · ${entry.entries.length}</span>`)
+      .join("");
+
+    const itemHtml = visibleItems
       .map((entry, index) => {
         const { item, location } = entry;
         const peers = cityGroups.get(location.name) || [];
@@ -937,10 +956,19 @@
         `;
       })
       .join("");
+    dynamicDom.atlasNodes.innerHTML = `${cityHtml}${itemHtml}`;
+
+    const cityLabels = Array.from(dynamicDom.atlasNodes.querySelectorAll(".atlas-city-label"));
+    state.atlasCityLabelEntries = cityEntries.map((entry, index) => ({
+      ...entry,
+      element: cityLabels[index],
+    }));
+
     const labelButtons = Array.from(dynamicDom.atlasNodes.querySelectorAll(".atlas-node"));
     state.atlasLabelEntries = visibleItems.map((entry, index) => ({
       ...entry,
       anchor: anchors.get(entry.item.id),
+      labelOffset: labelOffsetForAtlasEntry(entry, cityGroups),
       element: labelButtons[index],
     }));
 
@@ -1108,6 +1136,50 @@
     state.atlasNodeGroup.add(glow);
   }
 
+  function addAtlasCityGlow(entries, anchor, color) {
+    const strength = Math.min(1, entries.length / 12);
+    const glow = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: haloTexture(),
+        color,
+        transparent: true,
+        opacity: 0.09 + strength * 0.18,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    glow.position.copy(anchor.clone().multiplyScalar(1.002));
+    glow.scale.setScalar(28 + entries.length * 4.4);
+    state.atlasNodeGroup.add(glow);
+
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(3.4 + entries.length * 0.18, 4.4 + entries.length * 0.22, 42),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.32,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    ring.position.copy(anchor.clone().multiplyScalar(1.004));
+    ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), anchor.clone().normalize());
+    state.atlasNodeGroup.add(ring);
+  }
+
+  function labelOffsetForAtlasEntry(entry, cityGroups) {
+    const peers = cityGroups.get(entry.location.name) || [];
+    if (peers.length <= 1) return { x: 0, y: 0 };
+    const localIndex = peers.findIndex((peer) => peer.item.id === entry.item.id);
+    const angle = (localIndex / peers.length) * Math.PI * 2 - Math.PI / 2;
+    const radius = Math.min(28, 10 + peers.length * 1.8);
+    return {
+      x: Math.cos(angle) * radius,
+      y: Math.sin(angle) * radius,
+    };
+  }
+
   function addAtlasArc(link, start, end, opacity) {
     if (start.distanceToSquared(end) < 1) return;
     const angle = start.angleTo(end);
@@ -1158,7 +1230,26 @@
     const height = dynamicDom.atlasNodes.clientHeight || 1;
     const cameraVector = state.atlasCamera.position.clone().normalize();
     const projected = [];
+    const cityProjected = [];
     state.atlasGroup.updateMatrixWorld(true);
+    state.atlasCityLabelEntries.forEach((entry) => {
+      const { anchor, element } = entry;
+      if (!anchor || !element) return;
+      const world = anchor.clone().applyMatrix4(state.atlasGroup.matrixWorld);
+      const normal = anchor.clone().normalize().applyQuaternion(state.atlasGroup.quaternion);
+      const screen = world.clone().project(state.atlasCamera);
+      const front = normal.dot(cameraVector) > -0.04;
+      const x = (screen.x * 0.5 + 0.5) * width;
+      const y = (-screen.y * 0.5 + 0.5) * height;
+      const rect = {
+        left: x - 54,
+        right: x + 54,
+        top: y - 12,
+        bottom: y + 18,
+      };
+      cityProjected.push({ ...entry, front, x, y, rect, priority: 900 + entry.entries.length * 24 + entry.heat });
+    });
+
     state.atlasLabelEntries.forEach((entry) => {
       const { item, anchor, element } = entry;
       if (!anchor || !element) return;
@@ -1167,26 +1258,43 @@
       const screen = world.clone().project(state.atlasCamera);
       const focus = item.id === state.constellationId || item.id === state.selectedId || item.id === state.searchHitId;
       const front = normal.dot(cameraVector) > -0.08;
-      const x = (screen.x * 0.5 + 0.5) * width;
-      const y = (-screen.y * 0.5 + 0.5) * height;
+      const offset = entry.labelOffset || { x: 0, y: 0 };
+      const x = (screen.x * 0.5 + 0.5) * width + offset.x;
+      const y = (-screen.y * 0.5 + 0.5) * height + offset.y;
+      const labelWidth = clampNumber(44 + String(item.name || "").length * 4.7, 72, focus ? 150 : 112);
       const rect = {
-        left: x - 58,
-        right: x + 58,
-        top: y - 16,
-        bottom: y + 26,
+        left: x - labelWidth / 2,
+        right: x + labelWidth / 2,
+        top: y - 14,
+        bottom: y + 22,
       };
       projected.push({ item, element, focus, front, x, y, rect, priority: labelPriority(item, focus) });
     });
 
     const placed = [];
     const constellationIds = constellationRelatedIds();
+    cityProjected
+      .sort((a, b) => b.priority - a.priority || a.city.localeCompare(b.city))
+      .forEach((entry) => {
+        const inside = entry.x >= -40 && entry.x <= width + 40 && entry.y >= -40 && entry.y <= height + 40;
+        const overlaps = placed.some((placedEntry) => rectsOverlap(entry.rect, placedEntry.rect, 8));
+        const visible = entry.front && inside && !overlaps;
+        entry.element.style.left = `${entry.x}px`;
+        entry.element.style.top = `${entry.y}px`;
+        entry.element.style.zIndex = String(Math.round(entry.priority / 20));
+        entry.element.classList.toggle("is-visible", visible);
+        entry.element.classList.toggle("is-rear", !entry.front);
+        if (visible) placed.push(entry);
+      });
+
     projected
       .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
       .forEach((entry) => {
         const focus = entry.focus || constellationIds.has(entry.item.id);
         const inside = entry.x >= -40 && entry.x <= width + 40 && entry.y >= -40 && entry.y <= height + 40;
-        const overlaps = !focus && placed.some((placedEntry) => rectsOverlap(entry.rect, placedEntry.rect, 10));
-        const visible = entry.front && inside && (!overlaps || focus);
+        const overlaps = !focus && placed.some((placedEntry) => rectsOverlap(entry.rect, placedEntry.rect, 7));
+        const alwaysShowKind = entry.item.kind === "company" || entry.item.kind === "achievement";
+        const visible = entry.front && inside && (!overlaps || focus || alwaysShowKind && placed.length < 14);
         entry.element.style.left = `${entry.x}px`;
         entry.element.style.top = `${entry.y}px`;
         entry.element.style.zIndex = String(focus ? 60 : Math.round(entry.priority / 16));
