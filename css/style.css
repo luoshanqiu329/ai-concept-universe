@@ -839,10 +839,11 @@ a.model-pill:hover {
   position: absolute;
   inset: 84px 28px 126px 348px;
   overflow: hidden;
+  pointer-events: auto;
   border: 1px solid rgba(209, 225, 255, 0.12);
   border-radius: 22px;
   background:
-    radial-gradient(ellipse at 52% 48%, rgba(140, 183, 255, 0.13), transparent 42%),
+    radial-gradient(ellipse at 50% 50%, rgba(140, 183, 255, 0.16), transparent 42%),
     radial-gradient(ellipse at 78% 35%, rgba(121, 223, 193, 0.1), transparent 32%),
     linear-gradient(145deg, rgba(10, 13, 28, 0.34), rgba(3, 4, 10, 0.16));
   box-shadow:
@@ -862,18 +863,19 @@ a.model-pill:hover {
 }
 
 .atlas-stage::before {
+  z-index: 2;
   background:
-    linear-gradient(rgba(214, 226, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(214, 226, 255, 0.035) 1px, transparent 1px),
     radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.22) 0 1px, transparent 1px),
     radial-gradient(circle at 76% 18%, rgba(174, 203, 255, 0.18) 0 1px, transparent 1px),
-    radial-gradient(circle at 68% 78%, rgba(121, 223, 193, 0.18) 0 1px, transparent 1px);
-  background-size: 8.33% 10%, 8.33% 10%, 41px 41px, 67px 67px, 89px 89px;
-  opacity: 0.62;
+    radial-gradient(circle at 68% 78%, rgba(121, 223, 193, 0.18) 0 1px, transparent 1px),
+    radial-gradient(ellipse at 50% 50%, transparent 34%, rgba(116, 192, 252, 0.08) 68%, transparent 72%);
+  background-size: 41px 41px, 67px 67px, 89px 89px, 100% 100%;
+  opacity: 0.7;
   mask-image: radial-gradient(ellipse at center, #000 42%, transparent 88%);
 }
 
 .atlas-stage::after {
+  z-index: 3;
   border-radius: inherit;
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.11), transparent 24%),
@@ -885,7 +887,7 @@ a.model-pill:hover {
   position: absolute;
   left: 28px;
   top: 24px;
-  z-index: 2;
+  z-index: 7;
   max-width: min(360px, 42vw);
   pointer-events: none;
 }
@@ -905,12 +907,25 @@ a.model-pill:hover {
   line-height: 1.55;
 }
 
-.atlas-map,
-.atlas-lines,
-.atlas-city-glows,
+.atlas-globe,
 .atlas-nodes {
   position: absolute;
   inset: 0;
+}
+
+.atlas-globe {
+  z-index: 1;
+  cursor: grab;
+}
+
+.atlas-stage:active .atlas-globe {
+  cursor: grabbing;
+}
+
+.atlas-globe-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .atlas-map {
@@ -962,7 +977,7 @@ a.model-pill:hover {
 }
 
 .atlas-nodes {
-  z-index: 4;
+  z-index: 6;
   pointer-events: none;
 }
 
@@ -979,8 +994,18 @@ a.model-pill:hover {
   color: #ffffff;
   cursor: pointer;
   pointer-events: auto;
-  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px)));
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.86);
   transition: opacity 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+.atlas-node.is-visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
+.atlas-node:not(.is-visible) {
+  pointer-events: none;
 }
 
 .atlas-node:hover,
@@ -988,12 +1013,19 @@ a.model-pill:hover {
 .atlas-node.is-focus {
   outline: none;
   z-index: 40;
-  transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, 0px))) scale(1.14);
+  transform: translate(-50%, -50%) scale(1.14);
 }
 
 .atlas-node.is-dim {
-  opacity: 0.15;
   filter: saturate(0.6);
+}
+
+.atlas-node.is-visible.is-dim {
+  opacity: 0.16;
+}
+
+.atlas-node.is-rear {
+  pointer-events: none;
 }
 
 .atlas-dot,
@@ -1094,6 +1126,58 @@ a.model-pill:hover {
   box-shadow: 0 14px 46px rgba(0, 0, 0, 0.28);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.atlas-legend {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  z-index: 7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: min(420px, 46vw);
+  padding: 9px 11px;
+  border: 1px solid rgba(209, 225, 255, 0.12);
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(18, 23, 42, 0.62), rgba(7, 9, 18, 0.48));
+  color: rgba(227, 235, 255, 0.62);
+  font-size: 11px;
+  font-weight: 800;
+  pointer-events: none;
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+.atlas-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.atlas-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #8cb7ff;
+  box-shadow: 0 0 12px currentColor;
+}
+
+.atlas-legend i.is-company {
+  border-radius: 3px;
+  background: #ffffff;
+}
+
+.atlas-legend i.is-person {
+  background: #ffd43b;
+}
+
+.atlas-legend i.is-achievement {
+  background: #ffe066;
+}
+
+.atlas-legend i.is-concept {
+  background: #8cb7ff;
 }
 
 .atlas-meta strong {

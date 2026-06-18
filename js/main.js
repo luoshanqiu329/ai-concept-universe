@@ -77,6 +77,8 @@
     "achievement-2026-ai-concept-universe": { name: "Global", label: "全球", country: "Global", lat: 22, lon: 24 },
   };
 
+  const EARTH_TEXTURE_URL = "assets/earth_atmos_2048.jpg";
+  const GLOBE_RADIUS = 132;
   const STORAGE_KEY = "ai-concept-universe:last-seen-version";
   const CURRENT_YEAR = 2026;
   const EPOCH_YEAR = 1950;
@@ -143,6 +145,19 @@
     linkObjects: [],
     portraitCache: new Map(),
     atlasItems: [],
+    atlasScene: null,
+    atlasCamera: null,
+    atlasRenderer: null,
+    atlasGroup: null,
+    atlasEarth: null,
+    atlasAtmosphere: null,
+    atlasNodeGroup: null,
+    atlasLineGroup: null,
+    atlasControls: null,
+    atlasRaycaster: null,
+    atlasPointer: new THREE.Vector2(),
+    atlasNodeMeshes: new Map(),
+    atlasLabelEntries: [],
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -302,40 +317,30 @@
     atlasLayer.setAttribute("aria-label", "AI World Atlas");
     atlasLayer.innerHTML = `
       <div class="atlas-stage">
+        <div id="atlas-globe" class="atlas-globe" aria-hidden="true"></div>
         <div class="atlas-header">
           <p class="eyebrow">AI World Atlas</p>
-          <h2>全球 AI 版图</h2>
-          <p>公司、人物、论文与关键事件在世界地图上的分布。</p>
+          <h2>3D 全球 AI 版图</h2>
+          <p>拖拽旋转地球，观察公司、人物、论文与关键事件在真实地理空间中的分布。</p>
         </div>
-        <svg class="atlas-map" viewBox="0 0 1000 500" aria-hidden="true">
-          <defs>
-            <linearGradient id="atlas-land" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stop-color="rgba(116,192,252,0.2)" />
-              <stop offset="52%" stop-color="rgba(121,223,193,0.11)" />
-              <stop offset="100%" stop-color="rgba(255,143,163,0.14)" />
-            </linearGradient>
-          </defs>
-          <path class="atlas-land" d="M74 180 C116 125 184 116 238 146 C278 166 300 151 333 179 C300 205 279 236 243 232 C210 228 195 256 161 247 C127 237 99 225 74 180Z" />
-          <path class="atlas-land" d="M245 260 C279 274 301 309 291 350 C284 382 304 407 281 449 C248 420 222 382 219 340 C217 306 229 281 245 260Z" />
-          <path class="atlas-land" d="M420 156 C456 124 512 132 545 158 C578 180 566 212 526 217 C493 221 459 203 420 214 C391 205 394 176 420 156Z" />
-          <path class="atlas-land" d="M486 222 C526 212 571 232 589 273 C609 317 585 372 552 400 C516 361 493 318 472 276 C461 254 464 234 486 222Z" />
-          <path class="atlas-land" d="M585 164 C645 114 744 124 822 171 C874 203 913 203 940 245 C873 260 832 232 776 245 C721 257 690 226 647 231 C604 236 565 204 585 164Z" />
-          <path class="atlas-land" d="M774 332 C812 309 864 318 895 352 C872 383 821 392 782 372 C761 360 754 346 774 332Z" />
-          <path class="atlas-land is-ice" d="M314 78 C364 46 420 52 453 82 C414 111 352 112 314 78Z" />
-        </svg>
-        <svg id="atlas-lines" class="atlas-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
-        <div id="atlas-city-glows" class="atlas-city-glows" aria-hidden="true"></div>
         <div id="atlas-nodes" class="atlas-nodes"></div>
+        <div class="atlas-legend" aria-hidden="true">
+          <span><i class="is-company"></i>公司</span>
+          <span><i class="is-person"></i>人物</span>
+          <span><i class="is-achievement"></i>成就</span>
+          <span><i class="is-concept"></i>概念</span>
+        </div>
         <div id="atlas-meta" class="atlas-meta"></div>
       </div>
     `;
     document.querySelector(".app-shell")?.appendChild(atlasLayer);
     dynamicDom.atlasLayer = atlasLayer;
+    dynamicDom.atlasStage = atlasLayer.querySelector(".atlas-stage");
+    dynamicDom.atlasGlobe = atlasLayer.querySelector("#atlas-globe");
     dynamicDom.atlasNodes = atlasLayer.querySelector("#atlas-nodes");
-    dynamicDom.atlasLines = atlasLayer.querySelector("#atlas-lines");
-    dynamicDom.atlasCityGlows = atlasLayer.querySelector("#atlas-city-glows");
     dynamicDom.atlasMeta = atlasLayer.querySelector("#atlas-meta");
     dynamicDom.atlasNodes.addEventListener("click", handleAtlasClick);
+    dynamicDom.atlasStage.addEventListener("click", handleAtlasStageClick);
 
     const panel = document.querySelector(".filter-panel");
     const typeSection = dom.typeList?.closest(".panel-section");
@@ -888,9 +893,11 @@
   function renderAtlas() {
     if (!dynamicDom.atlasLayer || state.viewMode !== "atlas") {
       state.atlasItems = [];
+      state.atlasLabelEntries = [];
       return;
     }
 
+    ensureAtlasGlobe();
     const visibleItems = state.items
       .filter(isItemVisible)
       .map((item) => ({ item, location: geoLocationFor(item) }))
@@ -903,19 +910,13 @@
     const cityGroups = groupBy(visibleItems, (entry) => entry.location.name);
     const focusItem = state.itemById.get(state.constellationId);
 
-    dynamicDom.atlasCityGlows.innerHTML = Array.from(cityGroups.entries())
-      .map(([city, entries]) => {
-        const { x, y } = projectGeo(entries[0].location);
-        const maxHeat = Math.max(...entries.map((entry) => entry.item.heat || 50));
-        const color = itemColor(entries[0].item).getStyle();
-        return `<span class="atlas-city-glow" style="left:${x}%;top:${y}%;--city-color:${color};--city-size:${Math.max(34, Math.min(94, maxHeat))}px" title="${escapeHtml(city)}"></span>`;
-      })
-      .join("");
-
+    clearThreeGroup(state.atlasNodeGroup);
+    clearThreeGroup(state.atlasLineGroup);
+    state.atlasNodeMeshes.clear();
+    const anchors = new Map();
     dynamicDom.atlasNodes.innerHTML = visibleItems
-      .map((entry) => {
+      .map((entry, index) => {
         const { item, location } = entry;
-        const { x, y } = projectGeo(location);
         const peers = cityGroups.get(location.name) || [];
         const localIndex = peers.findIndex((peer) => peer.item.id === item.id);
         const spread = atlasSpread(localIndex, peers.length);
@@ -923,9 +924,12 @@
         const related = !hasFocus || constellationIds.has(item.id);
         const size = atlasNodeSize(item);
         const zIndex = 10 + (4 - kindRank(item.kind)) * 3 + Math.round((item.heat || 50) / 22);
+        const anchor = spreadGlobeAnchor(location, spread, GLOBE_RADIUS + 5 + kindRank(item.kind) * 0.65);
+        anchors.set(item.id, anchor);
+        addAtlasPin(item, anchor, related, color, size);
         const classes = ["atlas-node", `is-${item.kind}`, item.id === state.constellationId ? "is-focus" : "", related ? "" : "is-dim"].filter(Boolean).join(" ");
         return `
-          <button class="${classes}" type="button" data-target="${escapeHtml(item.id)}" title="${escapeHtml(item.name)} · ${escapeHtml(location.label || location.name)}" style="left:${x}%;top:${y}%;--node-color:${color};--node-size:${size}px;--node-z:${zIndex};--dx:${spread.x}px;--dy:${spread.y}px">
+          <button class="${classes}" type="button" data-target="${escapeHtml(item.id)}" title="${escapeHtml(item.name)} · ${escapeHtml(location.label || location.name)}" style="--node-color:${color};--node-size:${size}px;--node-z:${zIndex}">
             <span class="atlas-pulse"></span>
             <span class="atlas-dot"></span>
             <span class="atlas-node-label">${escapeHtml(item.name)}</span>
@@ -933,20 +937,23 @@
         `;
       })
       .join("");
+    const labelButtons = Array.from(dynamicDom.atlasNodes.querySelectorAll(".atlas-node"));
+    state.atlasLabelEntries = visibleItems.map((entry, index) => ({
+      ...entry,
+      anchor: anchors.get(entry.item.id),
+      element: labelButtons[index],
+    }));
 
     const geoById = new Map(visibleItems.map((entry) => [entry.item.id, entry.location]));
-    dynamicDom.atlasLines.innerHTML = state.links
+    state.links
       .filter((link) => geoById.has(link.sourceId) && geoById.has(link.targetId))
       .filter((link) => !hasFocus || (constellationIds.has(link.sourceId) && constellationIds.has(link.targetId)))
       .slice(0, hasFocus ? 80 : 34)
-      .map((link) => {
-        const start = projectGeo(geoById.get(link.sourceId));
-        const end = projectGeo(geoById.get(link.targetId));
-        const color = new THREE.Color(relationColor(link)).getStyle();
-        const opacity = hasFocus ? 0.45 : 0.12;
-        return `<line x1="${start.x}" y1="${start.y}" x2="${end.x}" y2="${end.y}" stroke="${color}" stroke-opacity="${opacity}" />`;
-      })
-      .join("");
+      .forEach((link) => {
+        const start = globePosition(geoById.get(link.sourceId), GLOBE_RADIUS + 6);
+        const end = globePosition(geoById.get(link.targetId), GLOBE_RADIUS + 6);
+        addAtlasArc(link, start, end, hasFocus ? 0.44 : 0.13);
+      });
 
     const topCities = Array.from(cityGroups.entries())
       .sort((a, b) => b[1].length - a[1].length)
@@ -954,17 +961,297 @@
       .map(([city, entries]) => `${city} ${entries.length}`)
       .join(" · ");
     dynamicDom.atlasMeta.innerHTML = `
-      <span>${visibleItems.length} geo nodes</span>
+      <span>${visibleItems.length} geo nodes · 3D Earth</span>
       <strong>${focusItem ? `${focusItem.name} · ${geoLocationFor(focusItem)?.label || ""}` : topCities || "全球 AI 版图"}</strong>
     `;
+    updateAtlasLabels();
+  }
+
+  function ensureAtlasGlobe() {
+    if (state.atlasRenderer || !dynamicDom.atlasGlobe) {
+      resizeAtlasGlobe();
+      return;
+    }
+
+    state.atlasScene = new THREE.Scene();
+    state.atlasCamera = new THREE.PerspectiveCamera(38, 1, 0.1, 1600);
+    state.atlasCamera.position.set(0, 0, 430);
+
+    state.atlasRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+    state.atlasRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    state.atlasRenderer.outputColorSpace = THREE.SRGBColorSpace;
+    state.atlasRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+    state.atlasRenderer.toneMappingExposure = 1.02;
+    state.atlasRenderer.setClearColor(0x000000, 0);
+    state.atlasRenderer.domElement.className = "atlas-globe-canvas";
+    dynamicDom.atlasGlobe.appendChild(state.atlasRenderer.domElement);
+
+    state.atlasGroup = new THREE.Group();
+    state.atlasGroup.rotation.x = -0.08;
+    state.atlasGroup.rotation.y = Math.PI / 2;
+    state.atlasScene.add(state.atlasGroup);
+
+    const ambient = new THREE.AmbientLight(0x7f9fc8, 1.18);
+    state.atlasScene.add(ambient);
+    const sun = new THREE.DirectionalLight(0xffffff, 2.35);
+    sun.position.set(-220, 180, 360);
+    state.atlasScene.add(sun);
+    const rim = new THREE.DirectionalLight(0x74c0fc, 1.45);
+    rim.position.set(260, -120, -260);
+    state.atlasScene.add(rim);
+
+    const earthGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 96, 64);
+    const earthMaterial = new THREE.MeshPhongMaterial({
+      color: 0x213653,
+      emissive: 0x07111d,
+      emissiveIntensity: 0.22,
+      shininess: 18,
+      specular: 0x1b3857,
+    });
+    state.atlasEarth = new THREE.Mesh(earthGeometry, earthMaterial);
+    state.atlasGroup.add(state.atlasEarth);
+
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      EARTH_TEXTURE_URL,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = Math.min(8, state.atlasRenderer.capabilities.getMaxAnisotropy?.() || 1);
+        state.atlasEarth.material.map = texture;
+        state.atlasEarth.material.color.set(0xffffff);
+        state.atlasEarth.material.needsUpdate = true;
+      },
+      undefined,
+      () => {
+        state.atlasEarth.material.map = generatedEarthTexture();
+        state.atlasEarth.material.color.set(0xffffff);
+        state.atlasEarth.material.needsUpdate = true;
+      }
+    );
+
+    state.atlasAtmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 96, 64),
+      new THREE.MeshBasicMaterial({
+        color: 0x74c0fc,
+        transparent: true,
+        opacity: 0.105,
+        side: THREE.BackSide,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    state.atlasGroup.add(state.atlasAtmosphere);
+    addAtlasGuideRings();
+
+    state.atlasLineGroup = new THREE.Group();
+    state.atlasNodeGroup = new THREE.Group();
+    state.atlasGroup.add(state.atlasLineGroup);
+    state.atlasGroup.add(state.atlasNodeGroup);
+    state.atlasControls = createAtlasGlobeControls(dynamicDom.atlasStage, state.atlasGroup, state.atlasCamera);
+    resizeAtlasGlobe();
+  }
+
+  function addAtlasGuideRings() {
+    const ringMaterial = new THREE.LineBasicMaterial({
+      color: 0x8cb7ff,
+      transparent: true,
+      opacity: 0.1,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    [-60, -30, 0, 30, 60].forEach((lat) => {
+      const points = [];
+      for (let lon = -180; lon <= 180; lon += 4) {
+        points.push(globePosition({ lat, lon }, GLOBE_RADIUS + 1.1));
+      }
+      state.atlasGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone()));
+    });
+    for (let lon = -150; lon <= 180; lon += 30) {
+      const points = [];
+      for (let lat = -78; lat <= 78; lat += 4) {
+        points.push(globePosition({ lat, lon }, GLOBE_RADIUS + 1.05));
+      }
+      state.atlasGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone()));
+    }
+  }
+
+  function addAtlasPin(item, anchor, related, color, size) {
+    const pinScale = Math.max(1.8, size / 5.1);
+    const pin = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 18, 14),
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: related ? 0.96 : 0.18,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    pin.position.copy(anchor);
+    pin.scale.setScalar(pinScale);
+    pin.userData.itemId = item.id;
+    state.atlasNodeGroup.add(pin);
+    state.atlasNodeMeshes.set(item.id, pin);
+
+    const glow = new THREE.Sprite(
+      new THREE.SpriteMaterial({
+        map: haloTexture(),
+        color,
+        transparent: true,
+        opacity: related ? 0.26 : 0.04,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    glow.position.copy(anchor.clone().multiplyScalar(1.003));
+    glow.scale.setScalar(pinScale * (item.kind === "achievement" ? 8.2 : item.kind === "company" ? 7 : 5.6));
+    state.atlasNodeGroup.add(glow);
+  }
+
+  function addAtlasArc(link, start, end, opacity) {
+    if (start.distanceToSquared(end) < 1) return;
+    const angle = start.angleTo(end);
+    const mid = start.clone().normalize().add(end.clone().normalize());
+    if (mid.lengthSq() < 0.0001) mid.set(0, 1, 0).cross(start).normalize();
+    const lift = GLOBE_RADIUS * (0.08 + Math.min(Math.PI, angle) * 0.18);
+    mid.normalize().multiplyScalar(GLOBE_RADIUS + lift);
+    const curve = new THREE.QuadraticBezierCurve3(
+      start.clone().normalize().multiplyScalar(GLOBE_RADIUS + 7),
+      mid,
+      end.clone().normalize().multiplyScalar(GLOBE_RADIUS + 7)
+    );
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(32)),
+      new THREE.LineBasicMaterial({
+        color: relationColor(link),
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    state.atlasLineGroup.add(line);
+  }
+
+  function animateAtlasGlobe() {
+    if (!state.atlasRenderer || state.viewMode !== "atlas") return;
+    resizeAtlasGlobe();
+    state.atlasControls?.update();
+    if (state.atlasAtmosphere) state.atlasAtmosphere.rotation.y += 0.00018;
+    updateAtlasLabels();
+    state.atlasRenderer.render(state.atlasScene, state.atlasCamera);
+  }
+
+  function resizeAtlasGlobe() {
+    if (!state.atlasRenderer || !dynamicDom.atlasGlobe) return;
+    const width = dynamicDom.atlasGlobe.clientWidth || 1;
+    const height = dynamicDom.atlasGlobe.clientHeight || 1;
+    if (state.atlasRenderer.domElement.width === Math.round(width * state.atlasRenderer.getPixelRatio()) && state.atlasRenderer.domElement.height === Math.round(height * state.atlasRenderer.getPixelRatio())) return;
+    state.atlasCamera.aspect = width / height;
+    state.atlasCamera.updateProjectionMatrix();
+    state.atlasRenderer.setSize(width, height, false);
+  }
+
+  function updateAtlasLabels() {
+    if (!state.atlasRenderer || state.viewMode !== "atlas" || !dynamicDom.atlasNodes) return;
+    const width = dynamicDom.atlasNodes.clientWidth || 1;
+    const height = dynamicDom.atlasNodes.clientHeight || 1;
+    const cameraVector = state.atlasCamera.position.clone().normalize();
+    const projected = [];
+    state.atlasGroup.updateMatrixWorld(true);
+    state.atlasLabelEntries.forEach((entry) => {
+      const { item, anchor, element } = entry;
+      if (!anchor || !element) return;
+      const world = anchor.clone().applyMatrix4(state.atlasGroup.matrixWorld);
+      const normal = anchor.clone().normalize().applyQuaternion(state.atlasGroup.quaternion);
+      const screen = world.clone().project(state.atlasCamera);
+      const focus = item.id === state.constellationId || item.id === state.selectedId || item.id === state.searchHitId;
+      const front = normal.dot(cameraVector) > -0.08;
+      const x = (screen.x * 0.5 + 0.5) * width;
+      const y = (-screen.y * 0.5 + 0.5) * height;
+      const rect = {
+        left: x - 58,
+        right: x + 58,
+        top: y - 16,
+        bottom: y + 26,
+      };
+      projected.push({ item, element, focus, front, x, y, rect, priority: labelPriority(item, focus) });
+    });
+
+    const placed = [];
+    const constellationIds = constellationRelatedIds();
+    projected
+      .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
+      .forEach((entry) => {
+        const focus = entry.focus || constellationIds.has(entry.item.id);
+        const inside = entry.x >= -40 && entry.x <= width + 40 && entry.y >= -40 && entry.y <= height + 40;
+        const overlaps = !focus && placed.some((placedEntry) => rectsOverlap(entry.rect, placedEntry.rect, 10));
+        const visible = entry.front && inside && (!overlaps || focus);
+        entry.element.style.left = `${entry.x}px`;
+        entry.element.style.top = `${entry.y}px`;
+        entry.element.style.zIndex = String(focus ? 60 : Math.round(entry.priority / 16));
+        entry.element.classList.toggle("is-visible", visible);
+        entry.element.classList.toggle("is-focus", focus);
+        entry.element.classList.toggle("is-rear", !entry.front);
+        if (visible) placed.push(entry);
+      });
+  }
+
+  function globePosition(location, radius = GLOBE_RADIUS) {
+    const lat = THREE.MathUtils.degToRad(location.lat);
+    const lon = THREE.MathUtils.degToRad(location.lon);
+    const phi = Math.PI / 2 - lat;
+    const theta = lon + Math.PI;
+    return new THREE.Vector3(
+      -radius * Math.sin(phi) * Math.cos(theta),
+      radius * Math.cos(phi),
+      radius * Math.sin(phi) * Math.sin(theta)
+    );
+  }
+
+  function spreadGlobeAnchor(location, spread, radius) {
+    const base = globePosition(location, radius);
+    if (!spread.x && !spread.y) return base;
+    const normal = base.clone().normalize();
+    const east = new THREE.Vector3(-normal.z, 0, normal.x);
+    if (east.lengthSq() < 0.0001) east.set(1, 0, 0);
+    east.normalize();
+    const north = new THREE.Vector3().crossVectors(normal, east).normalize();
+    return base
+      .clone()
+      .add(east.multiplyScalar(spread.x * 0.35))
+      .add(north.multiplyScalar(spread.y * 0.35))
+      .normalize()
+      .multiplyScalar(radius);
   }
 
   function handleAtlasClick(event) {
     const target = event.target.closest("[data-target]");
     if (!target) return;
+    event.stopPropagation();
     const item = state.itemById.get(target.dataset.target);
     if (!item) return;
     activateItem(item);
+  }
+
+  function handleAtlasStageClick(event) {
+    if (state.viewMode !== "atlas" || event.target.closest("[data-target]") || !state.atlasRenderer) return;
+    if (state.atlasControls?.shouldIgnoreClick?.()) return;
+    const rect = state.atlasRenderer.domElement.getBoundingClientRect();
+    state.atlasPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    state.atlasPointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    if (!state.atlasRaycaster) state.atlasRaycaster = new THREE.Raycaster();
+    state.atlasRaycaster.setFromCamera(state.atlasPointer, state.atlasCamera);
+    const intersections = state.atlasRaycaster.intersectObjects(Array.from(state.atlasNodeMeshes.values()), false);
+    const cameraVector = state.atlasCamera.position.clone().normalize();
+    const frontHit = intersections.find((hit) => {
+      const normal = hit.object.position.clone().normalize().applyQuaternion(state.atlasGroup.quaternion);
+      return hit.object?.userData?.itemId && normal.dot(cameraVector) > -0.08;
+    });
+    const itemId = frontHit?.object?.userData?.itemId;
+    if (!itemId) return;
+    const item = state.itemById.get(itemId);
+    if (item) activateItem(item);
   }
 
   function projectGeo(location) {
@@ -1324,10 +1611,22 @@
   }
 
   function focusOnItem(item) {
+    if (state.viewMode === "atlas") {
+      focusAtlasOnItem(item);
+      return;
+    }
     const position = new THREE.Vector3(item.position.x, item.position.y, item.position.z);
     const direction = position.clone().normalize().multiplyScalar(115);
     const targetCamera = position.clone().add(new THREE.Vector3(direction.x || 95, 76, direction.z || 160));
     animateCamera(targetCamera, position, 850);
+  }
+
+  function focusAtlasOnItem(item) {
+    ensureAtlasGlobe();
+    const location = geoLocationFor(item);
+    if (!location || !state.atlasControls) return;
+    state.atlasControls.focusLocation(location);
+    updateAtlasLabels();
   }
 
   function resetView() {
@@ -1433,12 +1732,15 @@
     state.camera.aspect = state.width / state.height;
     state.camera.updateProjectionMatrix();
     state.renderer.setSize(state.width, state.height);
+    resizeAtlasGlobe();
   }
 
   function exportPng() {
     const link = document.createElement("a");
     link.download = `ai-concept-universe-3d-${state.selectedYear}.png`;
-    link.href = state.renderer.domElement.toDataURL("image/png");
+    link.href = state.viewMode === "atlas" && state.atlasRenderer
+      ? state.atlasRenderer.domElement.toDataURL("image/png")
+      : state.renderer.domElement.toDataURL("image/png");
     link.click();
   }
 
@@ -1514,6 +1816,83 @@
     return controls;
   }
 
+  function createAtlasGlobeControls(element, group, camera) {
+    const goal = {
+      x: group.rotation.x,
+      y: group.rotation.y,
+      distance: camera.position.z,
+    };
+    const current = { ...goal };
+    const pointerStart = { x: 0, y: 0 };
+    let dragging = false;
+    let moved = false;
+    let ignoreClickUntil = 0;
+    const controls = {
+      update,
+      focusLocation,
+      shouldIgnoreClick: () => performance.now() < ignoreClickUntil,
+    };
+
+    element.addEventListener("pointerdown", (event) => {
+      if (event.target.closest("[data-target]") || event.target.closest(".atlas-meta")) return;
+      dragging = true;
+      moved = false;
+      pointerStart.x = event.clientX;
+      pointerStart.y = event.clientY;
+      element.setPointerCapture?.(event.pointerId);
+    });
+
+    element.addEventListener("pointermove", (event) => {
+      if (!dragging) return;
+      const dx = event.clientX - pointerStart.x;
+      const dy = event.clientY - pointerStart.y;
+      pointerStart.x = event.clientX;
+      pointerStart.y = event.clientY;
+      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
+      goal.y += dx * 0.0062;
+      goal.x = clampNumber(goal.x + dy * 0.0048, -0.72, 0.72);
+    });
+
+    element.addEventListener("pointerup", (event) => {
+      dragging = false;
+      if (moved) ignoreClickUntil = performance.now() + 180;
+      element.releasePointerCapture?.(event.pointerId);
+    });
+
+    element.addEventListener("pointercancel", () => {
+      dragging = false;
+    });
+
+    element.addEventListener("wheel", (event) => {
+      if (state.viewMode !== "atlas") return;
+      event.preventDefault();
+      goal.distance = clampNumber(goal.distance * Math.exp(event.deltaY * 0.001), 255, 620);
+    }, { passive: false });
+
+    function update() {
+      if (!dragging && !state.constellationId && !state.searchHitId) goal.y += 0.0007;
+      current.x += (goal.x - current.x) * 0.085;
+      current.y += (goal.y - current.y) * 0.085;
+      current.distance += (goal.distance - current.distance) * 0.085;
+      group.rotation.x = current.x;
+      group.rotation.y = current.y;
+      camera.position.z = current.distance;
+      camera.lookAt(0, 0, 0);
+    }
+
+    function focusLocation(location) {
+      const point = globePosition(location, GLOBE_RADIUS);
+      let nextY = Math.atan2(-point.x, point.z);
+      while (nextY - goal.y > Math.PI) nextY -= Math.PI * 2;
+      while (nextY - goal.y < -Math.PI) nextY += Math.PI * 2;
+      goal.y = nextY;
+      goal.x = clampNumber(THREE.MathUtils.degToRad(-location.lat * 0.34), -0.48, 0.48);
+      goal.distance = 360;
+    }
+
+    return controls;
+  }
+
   function setupUpdateBadge() {
     const currentVersion = state.payload?.meta?.currentVersion;
     if (!currentVersion) return;
@@ -1547,6 +1926,7 @@
     });
     updateLabels();
     state.renderer.render(state.scene, state.camera);
+    animateAtlasGlobe();
   }
 
   function itemColor(item) {
@@ -1651,6 +2031,19 @@
     dom.labelLayer.innerHTML = "";
   }
 
+  function clearThreeGroup(group) {
+    if (!group) return;
+    while (group.children.length) {
+      const child = group.children.pop();
+      child.geometry?.dispose?.();
+      if (Array.isArray(child.material)) {
+        child.material.forEach((material) => material.dispose?.());
+      } else {
+        child.material?.dispose?.();
+      }
+    }
+  }
+
   let cachedHalo = null;
   function haloTexture() {
     if (cachedHalo) return cachedHalo;
@@ -1667,6 +2060,51 @@
     context.fillRect(0, 0, 128, 128);
     cachedHalo = new THREE.CanvasTexture(canvas);
     return cachedHalo;
+  }
+
+  let cachedGeneratedEarth = null;
+  function generatedEarthTexture() {
+    if (cachedGeneratedEarth) return cachedGeneratedEarth;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1024;
+    canvas.height = 512;
+    const context = canvas.getContext("2d");
+    const ocean = context.createLinearGradient(0, 0, 0, canvas.height);
+    ocean.addColorStop(0, "#102845");
+    ocean.addColorStop(0.48, "#0c1d35");
+    ocean.addColorStop(1, "#061222");
+    context.fillStyle = ocean;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = "rgba(121, 223, 193, 0.42)";
+    [
+      [170, 164, 210, 86],
+      [250, 292, 118, 176],
+      [492, 162, 130, 78],
+      [548, 264, 112, 170],
+      [730, 178, 250, 96],
+      [850, 360, 94, 54],
+    ].forEach(([x, y, w, h]) => {
+      context.beginPath();
+      context.ellipse(x, y, w, h, 0.1, 0, Math.PI * 2);
+      context.fill();
+    });
+    context.strokeStyle = "rgba(214, 226, 255, 0.16)";
+    context.lineWidth = 1;
+    for (let x = 0; x <= canvas.width; x += 64) {
+      context.beginPath();
+      context.moveTo(x, 0);
+      context.lineTo(x, canvas.height);
+      context.stroke();
+    }
+    for (let y = 0; y <= canvas.height; y += 64) {
+      context.beginPath();
+      context.moveTo(0, y);
+      context.lineTo(canvas.width, y);
+      context.stroke();
+    }
+    cachedGeneratedEarth = new THREE.CanvasTexture(canvas);
+    cachedGeneratedEarth.colorSpace = THREE.SRGBColorSpace;
+    return cachedGeneratedEarth;
   }
 
   let cachedStarburst = null;

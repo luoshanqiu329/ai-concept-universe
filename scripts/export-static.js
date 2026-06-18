@@ -11,6 +11,7 @@ const STATIC_ENTRIES = [
   "index.html",
   "robots.txt",
   "preview-3d-final.png",
+  "assets",
   "css",
   "js",
   "data",
