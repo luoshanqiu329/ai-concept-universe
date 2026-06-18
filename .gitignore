@@ -2,3 +2,6 @@
 .local-site.pid
 .public-tunnel.log
 .public-tunnel.pid
+
+.github-deploy-key
+.github-deploy-key.pub
