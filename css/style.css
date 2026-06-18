@@ -828,7 +828,7 @@ a.model-pill:hover {
   position: fixed;
   inset: 0;
   z-index: 3;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .atlas-layer[hidden] {
@@ -981,6 +981,69 @@ a.model-pill:hover {
   pointer-events: none;
 }
 
+.atlas-city-rail {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  z-index: 7;
+  display: grid;
+  gap: 7px;
+  width: min(230px, 28vw);
+  pointer-events: auto;
+}
+
+.atlas-city-chip {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  min-height: 42px;
+  padding: 8px 10px;
+  border: 1px solid rgba(209, 225, 255, 0.12);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.62), rgba(7, 9, 18, 0.44)),
+    radial-gradient(circle at 12% 20%, rgba(116, 192, 252, 0.12), transparent 46%);
+  color: rgba(244, 247, 255, 0.82);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease, opacity 160ms ease;
+}
+
+.atlas-city-chip span,
+.atlas-city-chip strong {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.atlas-city-chip small {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: rgba(227, 235, 255, 0.48);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atlas-city-chip:hover,
+.atlas-city-chip.is-active {
+  transform: translateX(-2px);
+  border-color: rgba(140, 183, 255, 0.34);
+  background:
+    linear-gradient(145deg, rgba(36, 49, 82, 0.72), rgba(10, 13, 25, 0.56)),
+    radial-gradient(circle at 12% 20%, rgba(121, 223, 193, 0.16), transparent 48%);
+}
+
+.atlas-city-chip.is-reset {
+  min-height: 38px;
+  opacity: 0.86;
+}
+
 .atlas-city-label {
   position: absolute;
   display: inline-flex;
@@ -993,6 +1056,7 @@ a.model-pill:hover {
   border-radius: 999px;
   background: linear-gradient(135deg, rgba(15, 22, 42, 0.74), rgba(6, 8, 16, 0.54));
   color: rgba(244, 247, 255, 0.82);
+  font-family: inherit;
   font-size: 10px;
   font-weight: 900;
   line-height: 1.25;
@@ -1001,6 +1065,7 @@ a.model-pill:hover {
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.94);
   opacity: 0;
   pointer-events: none;
+  cursor: pointer;
   transform: translate(-50%, -50%) scale(0.92);
   box-shadow: 0 0 20px rgba(116, 192, 252, 0.14), 0 10px 32px rgba(0, 0, 0, 0.32);
   backdrop-filter: blur(14px) saturate(140%);
@@ -1020,7 +1085,15 @@ a.model-pill:hover {
 
 .atlas-city-label.is-visible {
   opacity: 0.92;
+  pointer-events: auto;
   transform: translate(-50%, -50%);
+}
+
+.atlas-city-label:hover,
+.atlas-city-label.is-focus {
+  color: #ffffff;
+  border-color: rgba(140, 183, 255, 0.34);
+  background: linear-gradient(135deg, rgba(36, 49, 82, 0.82), rgba(7, 9, 18, 0.68));
 }
 
 .atlas-node {
@@ -1386,6 +1459,21 @@ a.model-pill:hover {
 
   .atlas-header h2 {
     font-size: 23px;
+  }
+
+  .atlas-city-rail {
+    left: 18px;
+    right: 18px;
+    top: auto;
+    bottom: 54px;
+    display: flex;
+    width: auto;
+    overflow: auto;
+    padding-bottom: 2px;
+  }
+
+  .atlas-city-chip {
+    min-width: 150px;
   }
 
   .atlas-node-label {

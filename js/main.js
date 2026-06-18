@@ -91,7 +91,6 @@
     search: document.getElementById("entity-search"),
     datalist: document.getElementById("entity-options"),
     reset: document.getElementById("reset-view"),
-    export: document.getElementById("export-png"),
     updateBadge: document.getElementById("update-badge"),
     timeline: document.getElementById("timeline-slider"),
     chronicleYear: document.getElementById("chronicle-year"),
@@ -145,6 +144,8 @@
     linkObjects: [],
     portraitCache: new Map(),
     atlasItems: [],
+    atlasFocusCity: null,
+    atlasCityEntries: [],
     atlasScene: null,
     atlasCamera: null,
     atlasRenderer: null,
@@ -159,6 +160,12 @@
     atlasNodeMeshes: new Map(),
     atlasLabelEntries: [],
     atlasCityLabelEntries: [],
+    atlasNeedsLabelUpdate: true,
+    atlasNeedsRender: true,
+    atlasLastLabelUpdate: 0,
+    atlasLastFrame: 0,
+    atlasLastResizeCheck: 0,
+    atlasLastRenderSize: "",
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -299,7 +306,6 @@
     dom.stage.addEventListener("click", handleClick);
     dom.stage.addEventListener("pointerleave", () => setHovered(null));
     dom.reset.addEventListener("click", resetView);
-    dom.export.addEventListener("click", exportPng);
     dom.closeCard.addEventListener("click", closeInfoCard);
     dom.cardRelations.addEventListener("click", handleRelatedClick);
     dom.cardPeople.addEventListener("click", handleRelatedClick);
@@ -324,6 +330,7 @@
           <h2>3D 全球 AI 版图</h2>
           <p>拖拽旋转地球，观察公司、人物、论文与关键事件在真实地理空间中的分布。</p>
         </div>
+        <div id="atlas-city-rail" class="atlas-city-rail" aria-label="AI 热区"></div>
         <div id="atlas-nodes" class="atlas-nodes"></div>
         <div class="atlas-legend" aria-hidden="true">
           <span><i class="is-company"></i>公司</span>
@@ -338,9 +345,11 @@
     dynamicDom.atlasLayer = atlasLayer;
     dynamicDom.atlasStage = atlasLayer.querySelector(".atlas-stage");
     dynamicDom.atlasGlobe = atlasLayer.querySelector("#atlas-globe");
+    dynamicDom.atlasCityRail = atlasLayer.querySelector("#atlas-city-rail");
     dynamicDom.atlasNodes = atlasLayer.querySelector("#atlas-nodes");
     dynamicDom.atlasMeta = atlasLayer.querySelector("#atlas-meta");
     dynamicDom.atlasNodes.addEventListener("click", handleAtlasClick);
+    dynamicDom.atlasCityRail.addEventListener("click", handleAtlasCityRailClick);
     dynamicDom.atlasStage.addEventListener("click", handleAtlasStageClick);
 
     const panel = document.querySelector(".filter-panel");
@@ -894,6 +903,7 @@
   function renderAtlas() {
     if (!dynamicDom.atlasLayer || state.viewMode !== "atlas") {
       state.atlasItems = [];
+      state.atlasCityEntries = [];
       state.atlasLabelEntries = [];
       state.atlasCityLabelEntries = [];
       return;
@@ -911,10 +921,17 @@
     const hasFocus = constellationIds.size > 0;
     const cityGroups = groupBy(visibleItems, (entry) => entry.location.name);
     const focusItem = state.itemById.get(state.constellationId);
+    let focusCity = state.atlasFocusCity;
+    if (focusCity && !cityGroups.has(focusCity)) {
+      state.atlasFocusCity = null;
+      focusCity = null;
+    }
 
     clearThreeGroup(state.atlasNodeGroup);
     clearThreeGroup(state.atlasLineGroup);
     state.atlasNodeMeshes.clear();
+    state.atlasNeedsLabelUpdate = true;
+    state.atlasNeedsRender = true;
     const anchors = new Map();
 
     const cityEntries = Array.from(cityGroups.entries())
@@ -928,9 +945,11 @@
       })
       .sort((a, b) => b.entries.length - a.entries.length || b.heat - a.heat)
       .slice(0, 9);
+    state.atlasCityEntries = cityEntries;
+    renderAtlasCityRail(cityEntries);
 
     const cityHtml = cityEntries
-      .map((entry) => `<span class="atlas-city-label" title="${escapeHtml(entry.location.label || entry.city)}">${escapeHtml(entry.location.label || entry.city)} · ${entry.entries.length}</span>`)
+      .map((entry) => `<button class="atlas-city-label ${entry.city === focusCity ? "is-focus" : ""}" type="button" data-city="${escapeHtml(entry.city)}" title="${escapeHtml(entry.location.label || entry.city)}">${escapeHtml(entry.location.label || entry.city)} · ${entry.entries.length}</button>`)
       .join("");
 
     const itemHtml = visibleItems
@@ -940,7 +959,9 @@
         const localIndex = peers.findIndex((peer) => peer.item.id === item.id);
         const spread = atlasSpread(localIndex, peers.length);
         const color = itemColor(item).getStyle();
-        const related = !hasFocus || constellationIds.has(item.id);
+        const related = hasFocus
+          ? constellationIds.has(item.id)
+          : !focusCity || location.name === focusCity;
         const size = atlasNodeSize(item);
         const zIndex = 10 + (4 - kindRank(item.kind)) * 3 + Math.round((item.heat || 50) / 22);
         const anchor = spreadGlobeAnchor(location, spread, GLOBE_RADIUS + 5 + kindRank(item.kind) * 0.65);
@@ -990,9 +1011,49 @@
       .join(" · ");
     dynamicDom.atlasMeta.innerHTML = `
       <span>${visibleItems.length} geo nodes · 3D Earth</span>
-      <strong>${focusItem ? `${focusItem.name} · ${geoLocationFor(focusItem)?.label || ""}` : topCities || "全球 AI 版图"}</strong>
+      <strong>${focusItem ? `${focusItem.name} · ${geoLocationFor(focusItem)?.label || ""}` : focusCity ? atlasCitySummary(focusCity) : topCities || "全球 AI 版图"}</strong>
     `;
-    updateAtlasLabels();
+    updateAtlasLabels(true);
+  }
+
+  function renderAtlasCityRail(cityEntries) {
+    if (!dynamicDom.atlasCityRail) return;
+    const buttons = cityEntries.slice(0, 6).map((entry) => {
+      const leadNames = entry.entries
+        .slice()
+        .sort((a, b) => kindRank(a.item.kind) - kindRank(b.item.kind) || b.item.heat - a.item.heat)
+        .slice(0, 2)
+        .map(({ item }) => item.name)
+        .join(" / ");
+      const active = entry.city === state.atlasFocusCity ? "is-active" : "";
+      return `
+        <button class="atlas-city-chip ${active}" type="button" data-city="${escapeHtml(entry.city)}">
+          <span>${escapeHtml(entry.location.label || entry.city)}</span>
+          <strong>${entry.entries.length}</strong>
+          <small>${escapeHtml(leadNames)}</small>
+        </button>
+      `;
+    }).join("");
+    dynamicDom.atlasCityRail.innerHTML = `
+      <button class="atlas-city-chip is-reset ${state.atlasFocusCity ? "" : "is-active"}" type="button" data-city="">
+        <span>全球</span>
+        <strong>${state.atlasItems.length}</strong>
+        <small>全部 AI 星体</small>
+      </button>
+      ${buttons}
+    `;
+  }
+
+  function atlasCitySummary(cityName) {
+    const entry = state.atlasCityEntries.find((city) => city.city === cityName);
+    if (!entry) return cityName;
+    const leadNames = entry.entries
+      .slice()
+      .sort((a, b) => kindRank(a.item.kind) - kindRank(b.item.kind) || b.item.heat - a.item.heat)
+      .slice(0, 3)
+      .map(({ item }) => item.name)
+      .join(" · ");
+    return `${entry.location.label || cityName} ${entry.entries.length} · ${leadNames}`;
   }
 
   function ensureAtlasGlobe() {
@@ -1006,7 +1067,7 @@
     state.atlasCamera.position.set(0, 0, 430);
 
     state.atlasRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    state.atlasRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    state.atlasRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     state.atlasRenderer.outputColorSpace = THREE.SRGBColorSpace;
     state.atlasRenderer.toneMapping = THREE.ACESFilmicToneMapping;
     state.atlasRenderer.toneMappingExposure = 1.02;
@@ -1015,8 +1076,8 @@
     dynamicDom.atlasGlobe.appendChild(state.atlasRenderer.domElement);
 
     state.atlasGroup = new THREE.Group();
-    state.atlasGroup.rotation.x = -0.08;
-    state.atlasGroup.rotation.y = Math.PI / 2;
+    state.atlasGroup.rotation.x = 0.56;
+    state.atlasGroup.rotation.y = 0.74;
     state.atlasScene.add(state.atlasGroup);
 
     const ambient = new THREE.AmbientLight(0x7f9fc8, 1.18);
@@ -1028,7 +1089,7 @@
     rim.position.set(260, -120, -260);
     state.atlasScene.add(rim);
 
-    const earthGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 96, 64);
+    const earthGeometry = new THREE.SphereGeometry(GLOBE_RADIUS, 72, 48);
     const earthMaterial = new THREE.MeshPhongMaterial({
       color: 0x213653,
       emissive: 0x07111d,
@@ -1048,17 +1109,19 @@
         state.atlasEarth.material.map = texture;
         state.atlasEarth.material.color.set(0xffffff);
         state.atlasEarth.material.needsUpdate = true;
+        state.atlasNeedsRender = true;
       },
       undefined,
       () => {
         state.atlasEarth.material.map = generatedEarthTexture();
         state.atlasEarth.material.color.set(0xffffff);
         state.atlasEarth.material.needsUpdate = true;
+        state.atlasNeedsRender = true;
       }
     );
 
     state.atlasAtmosphere = new THREE.Mesh(
-      new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 96, 64),
+      new THREE.SphereGeometry(GLOBE_RADIUS * 1.035, 72, 48),
       new THREE.MeshBasicMaterial({
         color: 0x74c0fc,
         transparent: true,
@@ -1089,14 +1152,14 @@
     });
     [-60, -30, 0, 30, 60].forEach((lat) => {
       const points = [];
-      for (let lon = -180; lon <= 180; lon += 4) {
+      for (let lon = -180; lon <= 180; lon += 6) {
         points.push(globePosition({ lat, lon }, GLOBE_RADIUS + 1.1));
       }
       state.atlasGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone()));
     });
-    for (let lon = -150; lon <= 180; lon += 30) {
+    for (let lon = -150; lon <= 180; lon += 45) {
       const points = [];
-      for (let lat = -78; lat <= 78; lat += 4) {
+      for (let lat = -78; lat <= 78; lat += 6) {
         points.push(globePosition({ lat, lon }, GLOBE_RADIUS + 1.05));
       }
       state.atlasGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), ringMaterial.clone()));
@@ -1106,7 +1169,7 @@
   function addAtlasPin(item, anchor, related, color, size) {
     const pinScale = Math.max(1.8, size / 5.1);
     const pin = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 18, 14),
+      new THREE.SphereGeometry(1, 12, 8),
       new THREE.MeshBasicMaterial({
         color,
         transparent: true,
@@ -1153,7 +1216,7 @@
     state.atlasNodeGroup.add(glow);
 
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(3.4 + entries.length * 0.18, 4.4 + entries.length * 0.22, 42),
+      new THREE.RingGeometry(3.4 + entries.length * 0.18, 4.4 + entries.length * 0.22, 28),
       new THREE.MeshBasicMaterial({
         color,
         transparent: true,
@@ -1193,7 +1256,7 @@
       end.clone().normalize().multiplyScalar(GLOBE_RADIUS + 7)
     );
     const line = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(curve.getPoints(32)),
+      new THREE.BufferGeometry().setFromPoints(curve.getPoints(20)),
       new THREE.LineBasicMaterial({
         color: relationColor(link),
         transparent: true,
@@ -1207,25 +1270,47 @@
 
   function animateAtlasGlobe() {
     if (!state.atlasRenderer || state.viewMode !== "atlas") return;
-    resizeAtlasGlobe();
-    state.atlasControls?.update();
+    const now = performance.now();
+    if (now - state.atlasLastResizeCheck > 360) {
+      resizeAtlasGlobe();
+      state.atlasLastResizeCheck = now;
+    }
+    const controlsChanged = state.atlasControls?.update() || false;
+    if (controlsChanged) {
+      state.atlasNeedsLabelUpdate = true;
+      state.atlasNeedsRender = true;
+    }
+    const shouldUpdateLabels = state.atlasNeedsLabelUpdate && now - state.atlasLastLabelUpdate > 58;
+    const minFrameGap = state.atlasControls?.isDragging?.() ? 16 : 32;
+    if (!state.atlasNeedsRender && !shouldUpdateLabels) return;
+    if (now - state.atlasLastFrame < minFrameGap) return;
     if (state.atlasAtmosphere) state.atlasAtmosphere.rotation.y += 0.00018;
-    updateAtlasLabels();
+    if (shouldUpdateLabels) {
+      updateAtlasLabels(true);
+    }
     state.atlasRenderer.render(state.atlasScene, state.atlasCamera);
+    state.atlasNeedsRender = false;
+    state.atlasLastFrame = now;
   }
 
   function resizeAtlasGlobe() {
     if (!state.atlasRenderer || !dynamicDom.atlasGlobe) return;
     const width = dynamicDom.atlasGlobe.clientWidth || 1;
     const height = dynamicDom.atlasGlobe.clientHeight || 1;
-    if (state.atlasRenderer.domElement.width === Math.round(width * state.atlasRenderer.getPixelRatio()) && state.atlasRenderer.domElement.height === Math.round(height * state.atlasRenderer.getPixelRatio())) return;
+    const renderSize = `${width}x${height}`;
+    if (state.atlasRenderer.domElement.width === Math.round(width * state.atlasRenderer.getPixelRatio()) && state.atlasRenderer.domElement.height === Math.round(height * state.atlasRenderer.getPixelRatio()) && state.atlasLastRenderSize === renderSize) return;
     state.atlasCamera.aspect = width / height;
     state.atlasCamera.updateProjectionMatrix();
     state.atlasRenderer.setSize(width, height, false);
+    state.atlasLastRenderSize = renderSize;
+    state.atlasNeedsLabelUpdate = true;
+    state.atlasNeedsRender = true;
   }
 
-  function updateAtlasLabels() {
+  function updateAtlasLabels(force = false) {
     if (!state.atlasRenderer || state.viewMode !== "atlas" || !dynamicDom.atlasNodes) return;
+    const now = performance.now();
+    if (!force && !state.atlasNeedsLabelUpdate && now - state.atlasLastLabelUpdate < 90) return;
     const width = dynamicDom.atlasNodes.clientWidth || 1;
     const height = dynamicDom.atlasNodes.clientHeight || 1;
     const cameraVector = state.atlasCamera.position.clone().normalize();
@@ -1303,6 +1388,8 @@
         entry.element.classList.toggle("is-rear", !entry.front);
         if (visible) placed.push(entry);
       });
+    state.atlasNeedsLabelUpdate = false;
+    state.atlasLastLabelUpdate = now;
   }
 
   function globePosition(location, radius = GLOBE_RADIUS) {
@@ -1334,6 +1421,12 @@
   }
 
   function handleAtlasClick(event) {
+    const cityTarget = event.target.closest("[data-city]");
+    if (cityTarget) {
+      event.stopPropagation();
+      focusAtlasCity(cityTarget.dataset.city || "");
+      return;
+    }
     const target = event.target.closest("[data-target]");
     if (!target) return;
     event.stopPropagation();
@@ -1342,8 +1435,28 @@
     activateItem(item);
   }
 
+  function handleAtlasCityRailClick(event) {
+    const target = event.target.closest("[data-city]");
+    if (!target) return;
+    event.stopPropagation();
+    focusAtlasCity(target.dataset.city || "");
+  }
+
+  function focusAtlasCity(cityName) {
+    state.atlasFocusCity = cityName || null;
+    state.constellationId = null;
+    state.selectedId = null;
+    state.searchHitId = null;
+    dom.infoCard.hidden = true;
+    if (state.atlasFocusCity) {
+      const entry = state.atlasCityEntries.find((city) => city.city === state.atlasFocusCity);
+      if (entry) state.atlasControls?.focusLocation(entry.location);
+    }
+    renderAtlas();
+  }
+
   function handleAtlasStageClick(event) {
-    if (state.viewMode !== "atlas" || event.target.closest("[data-target]") || !state.atlasRenderer) return;
+    if (state.viewMode !== "atlas" || event.target.closest("[data-target]") || event.target.closest("[data-city]") || !state.atlasRenderer) return;
     if (state.atlasControls?.shouldIgnoreClick?.()) return;
     const rect = state.atlasRenderer.domElement.getBoundingClientRect();
     state.atlasPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -1734,12 +1847,13 @@
     const location = geoLocationFor(item);
     if (!location || !state.atlasControls) return;
     state.atlasControls.focusLocation(location);
-    updateAtlasLabels();
+    updateAtlasLabels(true);
   }
 
   function resetView() {
     state.searchHitId = null;
     state.constellationId = null;
+    state.atlasFocusCity = null;
     stopChroniclePlay();
     dom.search.value = "";
     animateCamera(new THREE.Vector3(0, 175, 440), new THREE.Vector3(0, 0, 0), 780);
@@ -1843,15 +1957,6 @@
     resizeAtlasGlobe();
   }
 
-  function exportPng() {
-    const link = document.createElement("a");
-    link.download = `ai-concept-universe-3d-${state.selectedYear}.png`;
-    link.href = state.viewMode === "atlas" && state.atlasRenderer
-      ? state.atlasRenderer.domElement.toDataURL("image/png")
-      : state.renderer.domElement.toDataURL("image/png");
-    link.click();
-  }
-
   function createGalaxyControls(camera, element) {
     const target = new THREE.Vector3(0, 0, 0);
     const spherical = new THREE.Spherical().setFromVector3(camera.position.clone().sub(target));
@@ -1939,10 +2044,11 @@
       update,
       focusLocation,
       shouldIgnoreClick: () => performance.now() < ignoreClickUntil,
+      isDragging: () => dragging,
     };
 
     element.addEventListener("pointerdown", (event) => {
-      if (event.target.closest("[data-target]") || event.target.closest(".atlas-meta")) return;
+      if (event.target.closest("[data-target], [data-city], .atlas-meta, .atlas-city-rail")) return;
       dragging = true;
       moved = false;
       pointerStart.x = event.clientX;
@@ -1959,6 +2065,8 @@
       if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
       goal.y += dx * 0.0062;
       goal.x = clampNumber(goal.x + dy * 0.0048, -0.72, 0.72);
+      state.atlasNeedsLabelUpdate = true;
+      state.atlasNeedsRender = true;
     });
 
     element.addEventListener("pointerup", (event) => {
@@ -1975,10 +2083,14 @@
       if (state.viewMode !== "atlas") return;
       event.preventDefault();
       goal.distance = clampNumber(goal.distance * Math.exp(event.deltaY * 0.001), 255, 620);
+      state.atlasNeedsLabelUpdate = true;
+      state.atlasNeedsRender = true;
     }, { passive: false });
 
     function update() {
-      if (!dragging && !state.constellationId && !state.searchHitId) goal.y += 0.0007;
+      const beforeX = current.x;
+      const beforeY = current.y;
+      const beforeDistance = current.distance;
       current.x += (goal.x - current.x) * 0.085;
       current.y += (goal.y - current.y) * 0.085;
       current.distance += (goal.distance - current.distance) * 0.085;
@@ -1986,6 +2098,7 @@
       group.rotation.y = current.y;
       camera.position.z = current.distance;
       camera.lookAt(0, 0, 0);
+      return Math.abs(current.x - beforeX) > 0.0002 || Math.abs(current.y - beforeY) > 0.0002 || Math.abs(current.distance - beforeDistance) > 0.02;
     }
 
     function focusLocation(location) {
@@ -1994,8 +2107,10 @@
       while (nextY - goal.y > Math.PI) nextY -= Math.PI * 2;
       while (nextY - goal.y < -Math.PI) nextY += Math.PI * 2;
       goal.y = nextY;
-      goal.x = clampNumber(THREE.MathUtils.degToRad(-location.lat * 0.34), -0.48, 0.48);
+      goal.x = clampNumber(THREE.MathUtils.degToRad(location.lat * 0.34), -0.58, 0.58);
       goal.distance = 360;
+      state.atlasNeedsLabelUpdate = true;
+      state.atlasNeedsRender = true;
     }
 
     return controls;
@@ -2017,6 +2132,10 @@
 
   function animate() {
     requestAnimationFrame(animate);
+    if (state.viewMode === "atlas") {
+      animateAtlasGlobe();
+      return;
+    }
     state.galaxy.rotation.y += 0.00058;
     state.controls.update();
     state.galaxy.children.forEach((child) => {
@@ -2034,7 +2153,6 @@
     });
     updateLabels();
     state.renderer.render(state.scene, state.camera);
-    animateAtlasGlobe();
   }
 
   function itemColor(item) {
