@@ -132,6 +132,7 @@
     viewMode: "panorama",
     isChroniclePlaying: false,
     chronicleTimer: 0,
+    radar: null,
     scene: null,
     camera: null,
     renderer: null,
@@ -357,6 +358,33 @@
     dynamicDom.atlasDock.addEventListener("click", handleAtlasDockClick);
     dynamicDom.atlasStage.addEventListener("click", handleAtlasStageClick);
 
+    const radarLayer = document.createElement("div");
+    radarLayer.id = "radar-layer";
+    radarLayer.className = "radar-layer";
+    radarLayer.hidden = true;
+    radarLayer.innerHTML = `
+      <div class="radar-pulse"></div>
+      <div class="radar-sweep"></div>
+      <div class="radar-core"></div>
+    `;
+    document.querySelector(".app-shell")?.appendChild(radarLayer);
+    dynamicDom.radarLayer = radarLayer;
+
+    const orbitalMenu = document.createElement("div");
+    orbitalMenu.id = "orbital-menu";
+    orbitalMenu.className = "orbital-menu";
+    orbitalMenu.hidden = true;
+    orbitalMenu.innerHTML = `
+      <button type="button" data-command="archive" title="查看档案" aria-label="查看档案"><i data-lucide="panel-right-open"></i></button>
+      <button type="button" data-command="constellation" title="进入星座" aria-label="进入星座"><i data-lucide="network"></i></button>
+      <button type="button" data-command="atlas" title="定位地图" aria-label="定位地图"><i data-lucide="globe-2"></i></button>
+      <button type="button" data-command="reference" title="打开资料" aria-label="打开资料"><i data-lucide="external-link"></i></button>
+    `;
+    document.querySelector(".app-shell")?.appendChild(orbitalMenu);
+    dynamicDom.orbitalMenu = orbitalMenu;
+    orbitalMenu.addEventListener("pointerdown", (event) => event.stopPropagation());
+    orbitalMenu.addEventListener("click", handleOrbitalCommand);
+
     const panel = document.querySelector(".filter-panel");
     const brandLockup = panel?.querySelector(".brand-lockup");
     if (brandLockup) {
@@ -418,6 +446,14 @@
     chronicleTrack.className = "chronicle-track";
     document.querySelector("#timeline-slider")?.insertAdjacentElement("afterend", chronicleTrack);
     dynamicDom.chronicleTrack = chronicleTrack;
+
+    const chronicleFocus = document.createElement("div");
+    chronicleFocus.id = "chronicle-focus-card";
+    chronicleFocus.className = "chronicle-focus-card";
+    chronicleFocus.hidden = true;
+    document.querySelector("#timeline-slider")?.insertAdjacentElement("beforebegin", chronicleFocus);
+    dynamicDom.chronicleFocus = chronicleFocus;
+    chronicleFocus.addEventListener("click", handleChronicleFocusClick);
 
     const archiveSection = document.createElement("div");
     archiveSection.id = "archive-section";
@@ -807,6 +843,7 @@
       .forEach((candidate) => {
         const { item, label, rect, x, y } = candidate;
         const focus = candidate.focus || constellationIds.has(item.id);
+        const revealed = isRadarRevealed(item.id);
         const insideViewport = rect.right >= 0 && rect.left <= state.width && rect.bottom >= 0 && rect.top <= state.height;
         const overlaps = !focus && placed.some((placedLabel) => rectsOverlap(rect, placedLabel.rect, 6));
         const visible = insideViewport && (!overlaps || focus);
@@ -815,6 +852,7 @@
         label.style.zIndex = String(focus ? 1000 : Math.round(candidate.priority));
         label.classList.toggle("is-visible", visible);
         label.classList.toggle("is-focus", focus);
+        label.classList.toggle("is-revealed", revealed);
         if (visible) placed.push(candidate);
       });
   }
@@ -832,10 +870,12 @@
   function applyFilters() {
     let visibleCount = 0;
     const atlasMode = state.viewMode === "atlas";
+    const chronicleMode = state.viewMode === "chronicle";
     const constellationIds = constellationRelatedIds();
     const hoverRelated = relatedIds(state.hoveredId || state.searchHitId);
     const focusRelated = constellationIds.size ? constellationIds : hoverRelated;
     document.body.classList.toggle("is-atlas-mode", atlasMode);
+    document.body.classList.toggle("is-chronicle-mode", chronicleMode);
     if (dynamicDom.atlasLayer) dynamicDom.atlasLayer.hidden = !atlasMode;
     state.items.forEach((item) => {
       const mesh = state.meshes.get(item.id);
@@ -876,6 +916,7 @@
     renderAtlas();
     updateChronicle();
     updateLabels();
+    updateInteractionOverlays();
   }
 
   function isItemVisible(item) {
@@ -1808,6 +1849,35 @@
       ? `${latest.year} · ${latest.title}：${latest.summary}`
       : "拖动时间，查看概念、公司和人物如何逐步出现。";
     renderChronicleMarks(latest);
+    renderChronicleFocus(latest);
+  }
+
+  function renderChronicleFocus(event) {
+    if (!dynamicDom.chronicleFocus) return;
+    const visible = state.viewMode === "chronicle" && event;
+    dynamicDom.chronicleFocus.hidden = !visible;
+    if (!visible) return;
+    const concepts = (event.concepts || [])
+      .map((id) => state.itemById.get(id))
+      .filter(Boolean)
+      .slice(0, 5);
+    const achievement = state.items.find((item) => item.kind === "achievement" && Number(item.year) === Number(event.year));
+    dynamicDom.chronicleFocus.innerHTML = `
+      <div class="chronicle-focus-year">${escapeHtml(event.year)}</div>
+      <div class="chronicle-focus-main">
+        <span>中心事件</span>
+        <strong>${escapeHtml(event.title)}</strong>
+        <p>${escapeHtml(event.summary)}</p>
+      </div>
+      <div class="chronicle-focus-links">
+        ${achievement ? clickableChronicleChip(achievement.id, "成就光碑") : ""}
+        ${concepts.map((item) => clickableChronicleChip(item.id, item.name)).join("")}
+      </div>
+    `;
+  }
+
+  function clickableChronicleChip(id, label) {
+    return `<button class="chronicle-focus-chip" type="button" data-target="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
   }
 
   function renderChronicleMarks(activeEvent = null) {
@@ -1843,6 +1913,14 @@
         buildControls();
       });
     });
+  }
+
+  function handleChronicleFocusClick(event) {
+    const chip = event.target.closest("[data-target]");
+    if (!chip) return;
+    const item = state.itemById.get(chip.dataset.target);
+    if (!item) return;
+    activateItem(item);
   }
 
   function handleSearchInput() {
@@ -1886,12 +1964,15 @@
     renderPeople(item);
     renderRelations(item);
     renderReferences(item);
+    startRadarPulse(item);
     applyFilters();
   }
 
   function closeInfoCard() {
     state.selectedId = null;
+    state.radar = null;
     dom.infoCard.hidden = true;
+    updateInteractionOverlays();
     applyFilters();
   }
 
@@ -2093,6 +2174,85 @@
     applyFilters();
   }
 
+  function startRadarPulse(item) {
+    if (!item || state.viewMode === "atlas") {
+      state.radar = null;
+      updateInteractionOverlays();
+      return;
+    }
+    const ids = orderedRelatedIds(item);
+    state.radar = {
+      itemId: item.id,
+      ids,
+      start: performance.now(),
+      duration: clampNumber(1400 + ids.length * 135, 1800, 4200),
+    };
+    if (dynamicDom.radarLayer) {
+      dynamicDom.radarLayer.style.setProperty("--radar-color", itemColor(item).getStyle());
+      dynamicDom.radarLayer.hidden = false;
+      dynamicDom.radarLayer.classList.remove("is-active");
+      void dynamicDom.radarLayer.offsetWidth;
+      dynamicDom.radarLayer.classList.add("is-active");
+    }
+    renderOrbitalMenu(item);
+  }
+
+  function orderedRelatedIds(item) {
+    const ids = Array.from(relatedIds(item.id)).filter((id) => id !== item.id && state.itemById.has(id));
+    return ids
+      .map((id) => state.itemById.get(id))
+      .sort((a, b) => kindRank(a.kind) - kindRank(b.kind) || b.heat - a.heat || a.name.localeCompare(b.name))
+      .slice(0, 18)
+      .map((entry) => entry.id);
+  }
+
+  function radarRevealRatio(itemId) {
+    if (!state.radar || !state.radar.ids.includes(itemId)) return 0;
+    const index = state.radar.ids.indexOf(itemId);
+    const elapsed = performance.now() - state.radar.start;
+    const delay = 280 + index * 135;
+    return clampNumber((elapsed - delay) / 520, 0, 1);
+  }
+
+  function isRadarRevealed(itemId) {
+    if (!state.radar) return false;
+    return itemId === state.radar.itemId || radarRevealRatio(itemId) > 0;
+  }
+
+  function renderOrbitalMenu(item) {
+    if (!dynamicDom.orbitalMenu || !item) return;
+    dynamicDom.orbitalMenu.dataset.target = item.id;
+    const referenceButton = dynamicDom.orbitalMenu.querySelector('[data-command="reference"]');
+    if (referenceButton) referenceButton.disabled = !(item.references || []).length;
+    dynamicDom.orbitalMenu.hidden = state.viewMode === "atlas";
+    if (window.lucide) window.lucide.createIcons();
+    updateInteractionOverlays();
+  }
+
+  function handleOrbitalCommand(event) {
+    const button = event.target.closest("[data-command]");
+    if (!button || button.disabled) return;
+    event.stopPropagation();
+    const item = state.itemById.get(dynamicDom.orbitalMenu?.dataset.target || state.selectedId);
+    if (!item) return;
+    const command = button.dataset.command;
+    if (command === "archive") {
+      openInfoCard(item);
+      focusOnItem(item);
+    } else if (command === "constellation") {
+      enterConstellation(item);
+      startRadarPulse(item);
+    } else if (command === "atlas") {
+      state.viewMode = "atlas";
+      buildControls();
+      applyFilters();
+      focusAtlasOnItem(item);
+    } else if (command === "reference") {
+      const first = (item.references || [])[0];
+      if (first?.url) window.open(first.url, "_blank", "noreferrer");
+    }
+  }
+
   function renderReferences(item) {
     const references = item.references || [];
     dom.cardLinks.innerHTML = references
@@ -2119,12 +2279,75 @@
     updateAtlasLabels(true);
   }
 
+  function screenPointForItem(item) {
+    const mesh = state.meshes.get(item?.id);
+    if (!mesh || !mesh.visible || !state.camera) return null;
+    const vector = new THREE.Vector3().copy(mesh.position).project(state.camera);
+    if (vector.z > 1) return null;
+    return {
+      x: vector.x * state.width / 2 + state.width / 2,
+      y: -vector.y * state.height / 2 + state.height / 2,
+      z: vector.z,
+    };
+  }
+
+  function updateInteractionOverlays() {
+    const item = state.itemById.get(state.selectedId || state.constellationId);
+    const shouldShow = item && state.viewMode !== "atlas" && !dom.infoCard.hidden;
+    const point = shouldShow ? screenPointForItem(item) : null;
+    const visible = Boolean(point);
+    if (dynamicDom.radarLayer) {
+      dynamicDom.radarLayer.hidden = !visible || !state.radar;
+      if (visible && state.radar) {
+        const size = clampNumber(210 + state.radar.ids.length * 10, 210, 390);
+        dynamicDom.radarLayer.style.width = `${size}px`;
+        dynamicDom.radarLayer.style.height = `${size}px`;
+        dynamicDom.radarLayer.style.left = `${point.x}px`;
+        dynamicDom.radarLayer.style.top = `${point.y}px`;
+      }
+    }
+    if (dynamicDom.orbitalMenu) {
+      dynamicDom.orbitalMenu.hidden = !visible;
+      if (visible) {
+        dynamicDom.orbitalMenu.style.left = `${point.x}px`;
+        dynamicDom.orbitalMenu.style.top = `${point.y}px`;
+      }
+    }
+  }
+
+  function updateRadarReveal() {
+    if (!state.radar) return;
+    const elapsed = performance.now() - state.radar.start;
+    const expired = elapsed > state.radar.duration + 900;
+    state.radar.ids.forEach((id) => {
+      const mesh = state.meshes.get(id);
+      if (!mesh || !mesh.visible) return;
+      const ratio = radarRevealRatio(id);
+      if (ratio <= 0) return;
+      const pulse = Math.sin(Math.min(1, ratio) * Math.PI);
+      const scale = mesh.userData.baseScale * (1 + pulse * 0.34);
+      mesh.scale.setScalar(scale);
+      mesh.material.opacity = Math.max(mesh.material.opacity || 0, 0.62 + pulse * 0.32);
+    });
+    if (expired) {
+      state.radar = null;
+      if (dynamicDom.radarLayer) {
+        dynamicDom.radarLayer.classList.remove("is-active");
+        dynamicDom.radarLayer.hidden = true;
+      }
+    }
+  }
+
   function resetView() {
     state.searchHitId = null;
     state.constellationId = null;
+    state.selectedId = null;
+    state.radar = null;
     state.atlasFocusCity = null;
     stopChroniclePlay();
     dom.search.value = "";
+    dom.infoCard.hidden = true;
+    updateInteractionOverlays();
     animateCamera(new THREE.Vector3(0, 175, 440), new THREE.Vector3(0, 0, 0), 780);
     applyFilters();
   }
@@ -2420,7 +2643,9 @@
         child.rotation.y += 0.00012;
       }
     });
+    updateRadarReveal();
     updateLabels();
+    updateInteractionOverlays();
     state.renderer.render(state.scene, state.camera);
   }
 
