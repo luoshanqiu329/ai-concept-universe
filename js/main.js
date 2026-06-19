@@ -358,6 +358,21 @@
     dynamicDom.atlasStage.addEventListener("click", handleAtlasStageClick);
 
     const panel = document.querySelector(".filter-panel");
+    const brandLockup = panel?.querySelector(".brand-lockup");
+    if (brandLockup) {
+      const archiveStats = document.createElement("div");
+      archiveStats.id = "archive-status-strip";
+      archiveStats.className = "archive-status-strip";
+      archiveStats.innerHTML = `
+        <span><strong>0</strong><em>概念</em></span>
+        <span><strong>0</strong><em>公司</em></span>
+        <span><strong>0</strong><em>人物</em></span>
+        <span><strong>0</strong><em>光碑</em></span>
+      `;
+      brandLockup.appendChild(archiveStats);
+      dynamicDom.archiveStats = archiveStats;
+    }
+
     const typeSection = dom.typeList?.closest(".panel-section");
     if (panel && typeSection) {
       const viewSection = document.createElement("div");
@@ -398,6 +413,12 @@
     dynamicDom.chroniclePlay = chronicleButton;
     chronicleButton.addEventListener("click", toggleChroniclePlay);
 
+    const chronicleTrack = document.createElement("div");
+    chronicleTrack.id = "chronicle-track";
+    chronicleTrack.className = "chronicle-track";
+    document.querySelector("#timeline-slider")?.insertAdjacentElement("afterend", chronicleTrack);
+    dynamicDom.chronicleTrack = chronicleTrack;
+
     const archiveSection = document.createElement("div");
     archiveSection.id = "archive-section";
     archiveSection.className = "archive-section";
@@ -417,11 +438,19 @@
     dynamicDom.archiveImportance = archiveSection.querySelector("#archive-importance");
     dynamicDom.archiveLineage = archiveSection.querySelector("#archive-lineage");
 
+    const archiveId = document.createElement("div");
+    archiveId.id = "archive-id";
+    archiveId.className = "archive-id";
+    archiveId.textContent = "ARCHIVE";
+    document.querySelector(".card-kicker")?.before(archiveId);
+    dynamicDom.archiveId = archiveId;
+
     if (window.lucide) window.lucide.createIcons();
   }
 
   function buildControls() {
     buildViewModeControls();
+    renderArchiveStats();
     buildTypeControls();
     buildCategoryControls();
     buildSearchOptions();
@@ -430,15 +459,21 @@
   function buildViewModeControls() {
     if (!dynamicDom.viewModeList) return;
     const modes = [
-      ["panorama", "全景"],
-      ["atlas", "地图"],
-      ["chronicle", "编年史"],
-      ["hot", "热点"],
-      ["company", "公司"],
-      ["person", "人物"],
+      { mode: "panorama", label: "全景", detail: "星系", icon: "orbit" },
+      { mode: "atlas", label: "地图", detail: "地球", icon: "globe-2" },
+      { mode: "chronicle", label: "编年", detail: "时间", icon: "history" },
+      { mode: "hot", label: "热点", detail: "新星", icon: "flame" },
+      { mode: "company", label: "公司", detail: "星港", icon: "building-2" },
+      { mode: "person", label: "人物", detail: "先驱", icon: "user-round" },
     ];
     dynamicDom.viewModeList.innerHTML = modes
-      .map(([mode, label]) => `<button class="view-mode ${state.viewMode === mode ? "is-active" : ""}" type="button" data-mode="${mode}">${label}</button>`)
+      .map(({ mode, label, detail, icon }) => `
+        <button class="view-mode ${state.viewMode === mode ? "is-active" : ""}" type="button" data-mode="${mode}">
+          <i data-lucide="${icon}" aria-hidden="true"></i>
+          <span>${label}</span>
+          <small>${detail}</small>
+        </button>
+      `)
       .join("");
     dynamicDom.viewModeList.querySelectorAll("[data-mode]").forEach((button) => {
       button.addEventListener("click", () => {
@@ -452,6 +487,22 @@
         applyFilters();
       });
     });
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function renderArchiveStats() {
+    if (!dynamicDom.archiveStats) return;
+    const meta = state.payload?.meta || {};
+    const stats = state.payload?.stats || {};
+    const values = [
+      [meta.conceptCount || stats.conceptCount || state.items.filter((item) => item.kind === "concept").length, "概念"],
+      [meta.companyCount || stats.companyCount || state.items.filter((item) => item.kind === "company").length, "公司"],
+      [meta.peopleCount || stats.peopleCount || state.items.filter((item) => item.kind === "person").length, "人物"],
+      [meta.achievementCount || stats.achievementCount || state.items.filter((item) => item.kind === "achievement").length, "光碑"],
+    ];
+    dynamicDom.archiveStats.innerHTML = values
+      .map(([value, label]) => `<span><strong>${escapeHtml(value)}</strong><em>${escapeHtml(label)}</em></span>`)
+      .join("");
   }
 
   function buildTypeControls() {
@@ -1746,6 +1797,7 @@
     dom.timeline.max = String(max);
     dom.timeline.value = String(max);
     state.selectedYear = max;
+    renderChronicleMarks();
   }
 
   function updateChronicle() {
@@ -1755,6 +1807,42 @@
     dom.chronicleEvent.textContent = latest
       ? `${latest.year} · ${latest.title}：${latest.summary}`
       : "拖动时间，查看概念、公司和人物如何逐步出现。";
+    renderChronicleMarks(latest);
+  }
+
+  function renderChronicleMarks(activeEvent = null) {
+    if (!dynamicDom.chronicleTrack || !dom.timeline) return;
+    const min = Number(dom.timeline.min || EPOCH_YEAR);
+    const max = Number(dom.timeline.max || CURRENT_YEAR);
+    const span = Math.max(1, max - min);
+    const activeYear = Number(activeEvent?.year || state.selectedYear);
+    dynamicDom.chronicleTrack.innerHTML = state.chronology
+      .map((event) => {
+        const year = Number(event.year);
+        const left = clampNumber(((year - min) / span) * 100, 0, 100);
+        const active = year <= activeYear;
+        return `
+          <button
+            class="chronicle-mark ${active ? "is-active" : ""} ${year === activeYear ? "is-current" : ""}"
+            type="button"
+            style="left:${left}%"
+            data-year="${year}"
+            title="${escapeHtml(`${year} · ${event.title}`)}"
+            aria-label="${escapeHtml(`${year} · ${event.title}`)}"
+          >
+            <span>${escapeHtml(year)}</span>
+          </button>
+        `;
+      })
+      .join("");
+    dynamicDom.chronicleTrack.querySelectorAll("[data-year]").forEach((button) => {
+      button.addEventListener("click", () => {
+        stopChroniclePlay();
+        state.viewMode = "chronicle";
+        jumpToChronicleYear(Number(button.dataset.year));
+        buildControls();
+      });
+    });
   }
 
   function handleSearchInput() {
@@ -1810,6 +1898,9 @@
   function renderArchiveNotes(item) {
     if (!dynamicDom.archiveSection) return;
     dynamicDom.archiveSection.hidden = false;
+    if (dynamicDom.archiveId) {
+      dynamicDom.archiveId.textContent = `ARCHIVE · ${TYPE_CONFIG[item.kind]?.label || item.kind} · ${String(item.id || "").toUpperCase()}`;
+    }
     dynamicDom.archiveImportance.textContent = archiveImportance(item);
     dynamicDom.archiveLineage.textContent = archiveLineage(item);
   }

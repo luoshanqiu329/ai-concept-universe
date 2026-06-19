@@ -13,6 +13,9 @@
   --accent-3: #ff8fa3;
   --surface-glow: rgba(132, 176, 255, 0.18);
   --shadow: 0 28px 110px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(255, 255, 255, 0.025) inset;
+  --hairline: rgba(244, 247, 255, 0.08);
+  --glass: rgba(8, 11, 22, 0.5);
+  --glass-strong: rgba(10, 14, 27, 0.76);
 }
 
 * {
@@ -57,6 +60,8 @@ body::after {
 }
 
 #space-canvas,
+.nebula-veil,
+.orbital-grid,
 .space-grain,
 .app-shell,
 #galaxy-stage {
@@ -69,16 +74,40 @@ body::after {
   opacity: 0.92;
 }
 
+.nebula-veil {
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.78;
+  background:
+    radial-gradient(ellipse at 28% 24%, rgba(140, 183, 255, 0.16), transparent 34%),
+    radial-gradient(ellipse at 66% 38%, rgba(121, 223, 193, 0.09), transparent 32%),
+    radial-gradient(ellipse at 45% 78%, rgba(255, 143, 163, 0.085), transparent 38%),
+    conic-gradient(from 228deg at 50% 52%, transparent 0deg, rgba(116, 192, 252, 0.045) 64deg, transparent 118deg, rgba(255, 224, 102, 0.032) 176deg, transparent 232deg, rgba(177, 151, 252, 0.04) 296deg, transparent 360deg);
+  filter: saturate(112%);
+  mix-blend-mode: screen;
+}
+
+.orbital-grid {
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.36;
+  background:
+    repeating-radial-gradient(ellipse at 50% 52%, rgba(214, 226, 255, 0.12) 0 1px, transparent 1px 84px),
+    linear-gradient(112deg, transparent 0 48%, rgba(214, 226, 255, 0.065) 49%, transparent 51% 100%);
+  mask-image: radial-gradient(ellipse at 50% 52%, transparent 0 18%, #000 38%, transparent 78%);
+}
+
 .space-grain {
   z-index: 1;
   pointer-events: none;
-  opacity: 0.16;
+  opacity: 0.18;
   mix-blend-mode: screen;
   background-image:
-    radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.42) 0 1px, transparent 1px),
+    radial-gradient(circle at 20% 40%, rgba(255, 255, 255, 0.38) 0 1px, transparent 1px),
     radial-gradient(circle at 70% 60%, rgba(174, 203, 255, 0.26) 0 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
-  background-size: 17px 17px, 31px 31px, 97px 97px;
+    radial-gradient(circle at 42% 76%, rgba(255, 224, 102, 0.16) 0 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.014) 1px, transparent 1px);
+  background-size: 17px 17px, 31px 31px, 43px 43px, 97px 97px;
 }
 
 .app-shell {
@@ -204,14 +233,16 @@ body.is-atlas-mode #label-layer {
 .filter-panel {
   top: 18px;
   left: 18px;
-  width: 238px;
+  width: 248px;
   max-height: min(590px, calc(100vh - 132px));
   overflow: auto;
   padding: 12px;
-  border-color: rgba(209, 225, 255, 0.12);
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(18, 23, 42, 0.52), rgba(7, 9, 18, 0.36));
-  box-shadow: 0 18px 78px rgba(0, 0, 0, 0.36), 0 0 0 1px rgba(255, 255, 255, 0.016) inset;
+  border-color: rgba(209, 225, 255, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.54), rgba(7, 9, 18, 0.38)),
+    radial-gradient(circle at 18% 0%, rgba(140, 183, 255, 0.12), transparent 42%);
+  box-shadow: 0 20px 86px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(255, 255, 255, 0.018) inset;
   opacity: 0.78;
   scrollbar-width: thin;
   scrollbar-color: rgba(174, 203, 255, 0.28) transparent;
@@ -236,6 +267,17 @@ body.is-atlas-mode #label-layer {
   padding-bottom: 10px;
   border-bottom: 1px solid rgba(214, 226, 255, 0.11);
   position: relative;
+}
+
+.brand-lockup::after {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 68px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, rgba(121, 223, 193, 0.78), rgba(140, 183, 255, 0));
+  box-shadow: 0 0 18px rgba(121, 223, 193, 0.28);
 }
 
 .eyebrow {
@@ -268,6 +310,46 @@ h1 {
   line-height: 1.4;
 }
 
+.archive-status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.archive-status-strip span {
+  min-width: 0;
+  padding: 7px 5px 6px;
+  border: 1px solid rgba(214, 226, 255, 0.08);
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
+    radial-gradient(circle at 50% 0%, rgba(121, 223, 193, 0.1), transparent 54%);
+  text-align: center;
+}
+
+.archive-status-strip strong,
+.archive-status-strip em {
+  display: block;
+  font-style: normal;
+}
+
+.archive-status-strip strong {
+  color: #ffffff;
+  font-size: 13px;
+  line-height: 1;
+}
+
+.archive-status-strip em {
+  margin-top: 4px;
+  overflow: hidden;
+  color: rgba(227, 235, 255, 0.48);
+  font-size: 8.5px;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .panel-section {
   margin-top: 10px;
 }
@@ -294,27 +376,59 @@ h1 {
 
 .view-mode-list {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .view-mode {
-  min-height: 27px;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 50px;
+  padding: 7px 4px 6px;
   border: 1px solid rgba(197, 213, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.035);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015)),
+    rgba(8, 11, 22, 0.32);
   color: rgba(238, 243, 255, 0.72);
   font: inherit;
-  font-size: 10.5px;
   font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.012) inset;
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.view-mode svg {
+  width: 15px;
+  height: 15px;
+  color: rgba(174, 203, 255, 0.82);
+}
+
+.view-mode span {
+  font-size: 10.5px;
+  line-height: 1.05;
+}
+
+.view-mode small {
+  color: rgba(227, 235, 255, 0.38);
+  font-size: 8.5px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .view-mode:hover,
 .view-mode.is-active {
   color: #ffffff;
-  border-color: rgba(140, 183, 255, 0.34);
-  background: linear-gradient(135deg, rgba(140, 183, 255, 0.18), rgba(121, 223, 193, 0.08));
-  box-shadow: 0 0 24px rgba(116, 192, 252, 0.12);
+  border-color: rgba(140, 183, 255, 0.3);
+  background:
+    linear-gradient(145deg, rgba(140, 183, 255, 0.16), rgba(121, 223, 193, 0.075)),
+    rgba(8, 11, 22, 0.5);
+  box-shadow: 0 0 24px rgba(116, 192, 252, 0.12), 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.view-mode.is-active svg {
+  color: rgba(121, 223, 193, 0.98);
+  filter: drop-shadow(0 0 10px rgba(121, 223, 193, 0.28));
 }
 
 .view-mode:hover {
@@ -439,7 +553,12 @@ h1 {
   align-items: center;
   gap: 10px;
   padding: 8px;
-  border-radius: 16px;
+  border-radius: 17px;
+  border-color: rgba(209, 225, 255, 0.11);
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.56), rgba(7, 9, 18, 0.4)),
+    radial-gradient(circle at 0% 0%, rgba(255, 224, 102, 0.08), transparent 52%);
+  opacity: 0.86;
 }
 
 .search-box {
@@ -537,9 +656,13 @@ h1 {
   width: 390px;
   max-height: calc(100vh - 202px);
   overflow: auto;
-  padding: 22px;
+  padding: 20px;
   border-radius: 18px;
-  background: var(--panel-strong);
+  border-color: rgba(209, 225, 255, 0.14);
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.9), rgba(7, 9, 18, 0.78)),
+    radial-gradient(circle at 18% 0%, rgba(140, 183, 255, 0.16), transparent 44%),
+    radial-gradient(circle at 100% 22%, rgba(255, 224, 102, 0.08), transparent 42%);
   scrollbar-width: thin;
   scrollbar-color: rgba(174, 203, 255, 0.28) transparent;
 }
@@ -568,6 +691,19 @@ h1 {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.archive-id {
+  width: calc(100% - 42px);
+  margin: 0 0 10px;
+  overflow: hidden;
+  color: rgba(121, 223, 193, 0.7);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .card-kicker {
@@ -614,11 +750,12 @@ h1 {
   display: grid;
   gap: 6px;
   padding: 11px 12px;
-  border: 1px solid rgba(197, 213, 255, 0.1);
+  border: 1px solid rgba(197, 213, 255, 0.11);
   border-radius: 13px;
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.025)),
-    radial-gradient(circle at 12% 18%, rgba(140, 183, 255, 0.13), transparent 42%);
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
+    radial-gradient(circle at 12% 18%, rgba(140, 183, 255, 0.12), transparent 42%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.012) inset;
 }
 
 .archive-row span {
@@ -643,9 +780,11 @@ h1 {
 .metric-grid div {
   min-height: 58px;
   padding: 11px;
-  border: 1px solid rgba(197, 213, 255, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.042);
+  border: 1px solid rgba(197, 213, 255, 0.105);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.052), rgba(255, 255, 255, 0.02)),
+    rgba(8, 11, 22, 0.34);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.015) inset;
 }
 
@@ -681,7 +820,9 @@ h1 {
   font-family: inherit;
   min-height: 28px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.045);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02)),
+    rgba(8, 11, 22, 0.32);
   color: rgba(238, 243, 255, 0.78);
   font-size: 12px;
   text-decoration: none;
@@ -742,12 +883,14 @@ a.model-pill:hover {
 .chronicle-bar {
   left: 50%;
   bottom: 18px;
-  width: min(560px, calc(100vw - 440px));
-  min-width: 420px;
-  padding: 8px 11px 7px;
-  border-color: rgba(209, 225, 255, 0.12);
-  border-radius: 14px;
-  background: linear-gradient(145deg, rgba(18, 23, 42, 0.5), rgba(7, 9, 18, 0.34));
+  width: min(660px, calc(100vw - 454px));
+  min-width: 430px;
+  padding: 9px 12px 8px;
+  border-color: rgba(209, 225, 255, 0.11);
+  border-radius: 16px;
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.5), rgba(7, 9, 18, 0.34)),
+    radial-gradient(circle at 50% 100%, rgba(121, 223, 193, 0.08), transparent 62%);
   box-shadow: 0 18px 78px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(255, 255, 255, 0.014) inset;
   opacity: 0.76;
   transform: translateX(-50%);
@@ -817,7 +960,7 @@ a.model-pill:hover {
   appearance: none;
   width: 100%;
   height: 14px;
-  margin: 7px 0 0;
+  margin: 8px 0 0;
   background: transparent;
   cursor: pointer;
 }
@@ -853,6 +996,74 @@ a.model-pill:hover {
   border-radius: 999px;
   background: #8cb7ff;
   box-shadow: 0 0 20px rgba(116, 192, 252, 0.3);
+}
+
+.chronicle-track {
+  position: relative;
+  height: 24px;
+  margin: -2px 6px 0;
+}
+
+.chronicle-track::before {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 10px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(214, 226, 255, 0.11), transparent);
+}
+
+.chronicle-mark {
+  position: absolute;
+  top: 5px;
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 1px solid rgba(214, 226, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(8, 11, 22, 0.82);
+  color: rgba(227, 235, 255, 0.42);
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.chronicle-mark span {
+  position: absolute;
+  left: 50%;
+  top: 13px;
+  padding: 2px 4px;
+  border-radius: 999px;
+  color: inherit;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.chronicle-mark.is-active {
+  border-color: rgba(121, 223, 193, 0.3);
+  background: radial-gradient(circle, #ffffff 0 18%, #79dfc1 24%, rgba(8, 11, 22, 0.86) 100%);
+  box-shadow: 0 0 15px rgba(121, 223, 193, 0.2);
+}
+
+.chronicle-mark.is-current,
+.chronicle-mark:hover {
+  z-index: 2;
+  border-color: rgba(255, 255, 255, 0.62);
+  background: radial-gradient(circle, #ffffff 0 20%, #ffe066 28%, rgba(8, 11, 22, 0.9) 100%);
+  box-shadow: 0 0 20px rgba(255, 224, 102, 0.26);
+  transform: translateX(-50%) scale(1.35);
+}
+
+.chronicle-mark.is-current span,
+.chronicle-mark:hover span {
+  opacity: 0.92;
+  transform: translateX(-50%) translateY(1px);
 }
 
 .chronicle-hints {
@@ -1618,6 +1829,10 @@ a.model-pill:hover {
     max-height: 32vh;
   }
 
+  .archive-status-strip {
+    grid-template-columns: repeat(4, minmax(52px, 1fr));
+  }
+
   .chronicle-bar {
     width: calc(100vw - 48px);
     min-width: 0;
@@ -1625,13 +1840,28 @@ a.model-pill:hover {
 
   .top-tools {
     top: auto;
-    right: 24px;
-    bottom: 112px;
+    left: 18px;
+    right: 18px;
+    bottom: 154px;
+    width: auto;
+    justify-content: stretch;
   }
 
   .search-box {
-    min-width: 180px;
-    width: 46vw;
+    flex: 1;
+    min-width: 0;
+    width: auto;
+  }
+
+  .update-badge {
+    width: 46px;
+    flex: 0 0 46px;
+    padding: 0;
+    border-radius: 14px;
+  }
+
+  .update-badge span {
+    display: none;
   }
 
   .info-card {
@@ -1651,6 +1881,14 @@ a.model-pill:hover {
   #chronicle-event {
     grid-column: 1 / -1;
     text-align: left;
+  }
+
+  .chronicle-track {
+    margin-inline: 4px;
+  }
+
+  .chronicle-mark span {
+    display: none;
   }
 
   .constellation-hud {
