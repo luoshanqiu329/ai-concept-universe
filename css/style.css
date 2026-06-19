@@ -271,13 +271,16 @@ body.is-atlas-mode #label-layer {
 
 .orbital-menu {
   z-index: 6;
-  width: 128px;
-  height: 128px;
+  width: 118px;
+  height: 88px;
 }
 
 .orbital-menu::before {
   position: absolute;
-  inset: 21px;
+  left: 26px;
+  right: 26px;
+  top: 18px;
+  bottom: 18px;
   content: "";
   border: 1px solid rgba(214, 226, 255, 0.11);
   border-radius: 999px;
@@ -308,19 +311,11 @@ body.is-atlas-mode #label-layer {
 }
 
 .orbital-menu button:nth-child(1) {
-  transform: translate(-50%, -50%) translateY(-52px);
+  transform: translate(-50%, -50%) translateX(40px);
 }
 
 .orbital-menu button:nth-child(2) {
-  transform: translate(-50%, -50%) translateX(52px);
-}
-
-.orbital-menu button:nth-child(3) {
-  transform: translate(-50%, -50%) translateY(52px);
-}
-
-.orbital-menu button:nth-child(4) {
-  transform: translate(-50%, -50%) translateX(-52px);
+  transform: translate(-50%, -50%) translateX(-40px);
 }
 
 .orbital-menu button:hover,
@@ -335,22 +330,12 @@ body.is-atlas-mode #label-layer {
 
 .orbital-menu button:nth-child(1):hover,
 .orbital-menu button:nth-child(1):focus-visible {
-  transform: translate(-50%, -50%) translateY(-55px) scale(1.08);
+  transform: translate(-50%, -50%) translateX(43px) scale(1.08);
 }
 
 .orbital-menu button:nth-child(2):hover,
 .orbital-menu button:nth-child(2):focus-visible {
-  transform: translate(-50%, -50%) translateX(55px) scale(1.08);
-}
-
-.orbital-menu button:nth-child(3):hover,
-.orbital-menu button:nth-child(3):focus-visible {
-  transform: translate(-50%, -50%) translateY(55px) scale(1.08);
-}
-
-.orbital-menu button:nth-child(4):hover,
-.orbital-menu button:nth-child(4):focus-visible {
-  transform: translate(-50%, -50%) translateX(-55px) scale(1.08);
+  transform: translate(-50%, -50%) translateX(-43px) scale(1.08);
 }
 
 .orbital-menu button:disabled {

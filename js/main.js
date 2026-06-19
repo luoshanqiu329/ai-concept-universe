@@ -375,8 +375,6 @@
     orbitalMenu.className = "orbital-menu";
     orbitalMenu.hidden = true;
     orbitalMenu.innerHTML = `
-      <button type="button" data-command="archive" title="查看档案" aria-label="查看档案"><i data-lucide="panel-right-open"></i></button>
-      <button type="button" data-command="constellation" title="进入星座" aria-label="进入星座"><i data-lucide="network"></i></button>
       <button type="button" data-command="atlas" title="定位地图" aria-label="定位地图"><i data-lucide="globe-2"></i></button>
       <button type="button" data-command="reference" title="打开资料" aria-label="打开资料"><i data-lucide="external-link"></i></button>
     `;
@@ -2236,13 +2234,7 @@
     const item = state.itemById.get(dynamicDom.orbitalMenu?.dataset.target || state.selectedId);
     if (!item) return;
     const command = button.dataset.command;
-    if (command === "archive") {
-      openInfoCard(item);
-      focusOnItem(item);
-    } else if (command === "constellation") {
-      enterConstellation(item);
-      startRadarPulse(item);
-    } else if (command === "atlas") {
+    if (command === "atlas") {
       state.viewMode = "atlas";
       buildControls();
       applyFilters();
