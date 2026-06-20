@@ -2,7 +2,7 @@
   "name": "ai-concept-universe",
   "version": "1.0.0",
   "private": true,
-  "description": "AI概念星系，一个纯前端 3D AI 知识地图。",
+  "description": "AI概念星系，一个纯前端 3D AI 知识星系。",
   "scripts": {
     "update": "node scripts/update.js",
     "export": "node scripts/export-static.js",
