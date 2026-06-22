@@ -96,7 +96,10 @@
     galaxy: null,
     meshes: new Map(),
     labels: new Map(),
-    linkObjects: [],
+    backgroundLinkObject: null,
+    highlightLinkObject: null,
+    linkVisibilitySignature: "",
+    linkHighlightSignature: "",
     portraitCache: new Map(),
     lastLabelUpdate: 0,
     lastPointerCheck: 0,
@@ -496,9 +499,11 @@
     clearGroup(state.galaxy);
     state.meshes.clear();
     state.labels.clear();
-    state.linkObjects = [];
+    state.backgroundLinkObject = null;
+    state.highlightLinkObject = null;
+    state.linkVisibilitySignature = "";
+    state.linkHighlightSignature = "";
     addGalaxyMist();
-    addRelationLines();
     addItemMeshes();
   }
 
@@ -582,27 +587,79 @@
     });
   }
 
-  function addRelationLines() {
-    state.links.forEach((link) => {
+  function updateLinkLayers(focusRelated, constellationIds) {
+    const visibleLinks = state.links.filter((link) => isItemVisible(link.source) && isItemVisible(link.target));
+    const visibilitySignature = visibleLinks.map((link) => link.id).join("|");
+    if (visibilitySignature !== state.linkVisibilitySignature) {
+      disposeSceneObject(state.backgroundLinkObject);
+      state.backgroundLinkObject = createLinkLayer(visibleLinks, 0.12, -1);
+      if (state.backgroundLinkObject) state.galaxy.add(state.backgroundLinkObject);
+      state.linkVisibilitySignature = visibilitySignature;
+    }
+
+    const highlightedLinks = focusRelated.size
+      ? visibleLinks.filter((link) => focusRelated.has(link.sourceId) && focusRelated.has(link.targetId))
+      : [];
+    const highlightSignature = highlightedLinks.map((link) => link.id).join("|");
+    if (highlightSignature !== state.linkHighlightSignature) {
+      disposeSceneObject(state.highlightLinkObject);
+      state.highlightLinkObject = createLinkLayer(highlightedLinks, constellationIds.size ? 0.78 : 0.62, 2);
+      if (state.highlightLinkObject) state.galaxy.add(state.highlightLinkObject);
+      state.linkHighlightSignature = highlightSignature;
+    }
+
+    if (state.backgroundLinkObject) {
+      state.backgroundLinkObject.visible = visibleLinks.length > 0;
+      state.backgroundLinkObject.material.opacity = focusRelated.size ? 0.018 : 0.12;
+    }
+    if (state.highlightLinkObject) {
+      state.highlightLinkObject.visible = highlightedLinks.length > 0;
+      state.highlightLinkObject.material.opacity = constellationIds.size ? 0.78 : 0.62;
+    }
+  }
+
+  function createLinkLayer(links, opacity, renderOrder) {
+    if (!links.length) return null;
+    const positions = [];
+    const colors = [];
+    const color = new THREE.Color();
+    links.forEach((link) => {
       const start = new THREE.Vector3(link.source.position.x, link.source.position.y, link.source.position.z);
       const end = new THREE.Vector3(link.target.position.x, link.target.position.y, link.target.position.z);
       const mid = start.clone().add(end).multiplyScalar(0.5);
       mid.multiplyScalar(0.76);
       mid.y += 18 + (stableHash(link.id) % 26);
       const curve = new THREE.CatmullRomCurve3([start, mid, end]);
-      const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(18));
-      const material = new THREE.LineBasicMaterial({
-        color: relationColor(link),
-        transparent: true,
-        opacity: 0.12,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-      });
-      const line = new THREE.Line(geometry, material);
-      line.userData.link = link;
-      state.galaxy.add(line);
-      state.linkObjects.push(line);
+      const points = curve.getPoints(14);
+      color.setHex(relationColor(link));
+      for (let index = 0; index < points.length - 1; index += 1) {
+        const a = points[index];
+        const b = points[index + 1];
+        positions.push(a.x, a.y, a.z, b.x, b.y, b.z);
+        colors.push(color.r, color.g, color.b, color.r, color.g, color.b);
+      }
     });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(positions), 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(colors), 3));
+    const material = new THREE.LineBasicMaterial({
+      transparent: true,
+      opacity,
+      vertexColors: true,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const layer = new THREE.LineSegments(geometry, material);
+    layer.renderOrder = renderOrder;
+    layer.userData.linkLayer = true;
+    return layer;
+  }
+
+  function disposeSceneObject(object) {
+    if (!object) return;
+    object.parent?.remove(object);
+    object.geometry?.dispose?.();
+    object.material?.dispose?.();
   }
 
   function addGalaxyMist() {
@@ -801,13 +858,7 @@
       }
     });
 
-    state.linkObjects.forEach((line) => {
-      const link = line.userData.link;
-      const visible = isItemVisible(link.source) && isItemVisible(link.target);
-      const highlighted = focusRelated.has(link.sourceId) && focusRelated.has(link.targetId) && focusRelated.size > 0;
-      line.visible = visible;
-      line.material.opacity = visible ? (highlighted ? (constellationIds.size ? 0.78 : 0.62) : focusRelated.size ? 0.018 : 0.12) : 0;
-    });
+    updateLinkLayers(focusRelated, constellationIds);
 
     dom.sliceYear.textContent = String(state.selectedYear);
     dom.sliceCount.textContent = `${visibleCount} nodes`;
