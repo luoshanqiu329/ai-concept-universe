@@ -137,6 +137,8 @@ body::after {
 
 .space-label {
   position: absolute;
+  left: 0;
+  top: 0;
   max-width: 180px;
   padding: 4px 8px 4px 18px;
   border: 1px solid rgba(214, 226, 255, 0.12);
@@ -148,14 +150,13 @@ body::after {
   font-weight: 800;
   white-space: nowrap;
   text-shadow: 0 0 12px rgba(0, 0, 0, 0.94);
-  transform: translate(-50%, -50%);
+  transform: translate3d(var(--label-x, -9999px), var(--label-y, -9999px), 0) translate(-50%, -50%) scale(var(--label-scale, 1));
   opacity: 0;
   pointer-events: auto;
   cursor: pointer;
-  backdrop-filter: blur(12px) saturate(140%);
-  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  will-change: transform, opacity;
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.24), 0 0 18px color-mix(in srgb, var(--label-color, #8cb7ff) 18%, transparent);
-  transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease, background 180ms ease;
+  transition: opacity 180ms ease, border-color 180ms ease, background 180ms ease;
 }
 
 .space-label::before {
@@ -176,10 +177,10 @@ body::after {
 }
 
 .space-label.is-focus {
+  --label-scale: 1.08;
   color: #ffffff;
   border-color: color-mix(in srgb, var(--label-color, #8cb7ff) 48%, rgba(255, 255, 255, 0.22));
   background: rgba(12, 16, 30, 0.76);
-  transform: translate(-50%, -50%) scale(1.08);
   box-shadow: 0 14px 42px rgba(0, 0, 0, 0.38), 0 0 30px color-mix(in srgb, var(--label-color, #8cb7ff) 42%, transparent);
 }
 
@@ -192,6 +193,7 @@ body::after {
 
 .space-label:hover,
 .space-label:focus-visible {
+  --label-scale: 1.08;
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.32);
   background: rgba(10, 12, 24, 0.78);

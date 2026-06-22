@@ -1660,6 +1660,11 @@ function snapshotFor(payload, dateId) {
   };
 }
 
+function publicPayload(payload) {
+  const { snapshots, ...rest } = payload;
+  return rest;
+}
+
 function refreshEmbeddedPayload(payload) {
   if (!fs.existsSync(INDEX_PATH)) return;
   const html = fs.readFileSync(INDEX_PATH, "utf8");
@@ -1683,8 +1688,9 @@ async function main() {
     [dateId]: snapshotFor(payload, dateId),
   };
   writeJson(path.join(VERSION_DIR, `${dateId}.json`), payload.snapshots[dateId]);
-  writeJson(CONCEPTS_PATH, payload);
-  refreshEmbeddedPayload(payload);
+  const publicData = publicPayload(payload);
+  writeJson(CONCEPTS_PATH, publicData);
+  refreshEmbeddedPayload(publicData);
   console.log(`AI Concept Universe updated: ${dateId}`);
   console.log(`Nodes: ${payload.meta.nodeCount} (${payload.meta.conceptCount} concepts, ${payload.meta.companyCount} companies, ${payload.meta.peopleCount} people, ${payload.meta.achievementCount} achievements)`);
   console.log(`Chronology: ${payload.meta.chronologyStart}-${payload.meta.chronologyEnd}`);

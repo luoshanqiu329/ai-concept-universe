@@ -24,6 +24,18 @@
   const STORAGE_KEY = "ai-concept-universe:last-seen-version";
   const CURRENT_YEAR = 2026;
   const EPOCH_YEAR = 1950;
+  const PERFORMANCE = {
+    rendererPixelRatio: 1.45,
+    backgroundPixelRatio: 1.25,
+    labelInterval: 64,
+    backgroundInterval: 48,
+    pointerInterval: 36,
+    maxLabels: 92,
+    maxStars: 520,
+    maxDust: 120,
+    maxMeteors: 5,
+    maxShips: 2,
+  };
   const dom = {
     stage: document.getElementById("galaxy-stage"),
     labelLayer: document.getElementById("label-layer"),
@@ -86,6 +98,8 @@
     labels: new Map(),
     linkObjects: [],
     portraitCache: new Map(),
+    lastLabelUpdate: 0,
+    lastPointerCheck: 0,
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -193,8 +207,12 @@
     state.camera = new THREE.PerspectiveCamera(50, state.width / state.height, 0.1, 5200);
     state.camera.position.set(0, 168, 468);
 
-    state.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    state.renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: true,
+      powerPreference: "high-performance",
+    });
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, PERFORMANCE.rendererPixelRatio));
     state.renderer.setSize(state.width, state.height);
     state.renderer.outputColorSpace = THREE.SRGBColorSpace;
     state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -658,6 +676,8 @@
     label.type = "button";
     label.className = `space-label is-${item.kind}`;
     label.style.setProperty("--label-color", itemColor(item).getStyle());
+    label.style.setProperty("--label-x", "-9999px");
+    label.style.setProperty("--label-y", "-9999px");
     label.textContent = item.name;
     label.dataset.target = item.id;
     label.title = `查看 ${item.name}`;
@@ -669,6 +689,10 @@
       activateItem(next);
     });
     dom.labelLayer.appendChild(label);
+    item.labelSize = {
+      width: Math.min(180, Math.max(44, item.name.length * 6.8 + 28)),
+      height: 24,
+    };
     state.labels.set(item.id, label);
   }
 
@@ -693,8 +717,7 @@
       }
       const x = vector.x * halfW + halfW;
       const y = -vector.y * halfH + halfH;
-      const width = label.offsetWidth || Math.min(180, item.name.length * 7 + 14);
-      const height = label.offsetHeight || 20;
+      const { width, height } = item.labelSize || { width: Math.min(180, item.name.length * 7 + 22), height: 24 };
       candidates.push({
         item,
         label,
@@ -715,15 +738,19 @@
     const constellationIds = constellationRelatedIds();
     candidates
       .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
-      .forEach((candidate) => {
+      .forEach((candidate, index) => {
         const { item, label, rect, x, y } = candidate;
         const focus = candidate.focus || constellationIds.has(item.id);
+        if (index >= PERFORMANCE.maxLabels && !focus) {
+          label.classList.remove("is-visible", "is-focus", "is-revealed");
+          return;
+        }
         const revealed = isRadarRevealed(item.id);
         const insideViewport = rect.right >= 0 && rect.left <= state.width && rect.bottom >= 0 && rect.top <= state.height;
         const overlaps = !focus && placed.some((placedLabel) => rectsOverlap(rect, placedLabel.rect, 6));
         const visible = insideViewport && (!overlaps || focus);
-        label.style.left = `${x}px`;
-        label.style.top = `${y}px`;
+        label.style.setProperty("--label-x", `${x}px`);
+        label.style.setProperty("--label-y", `${y}px`);
         label.style.zIndex = String(focus ? 1000 : Math.round(candidate.priority));
         label.classList.toggle("is-visible", visible);
         label.classList.toggle("is-focus", focus);
@@ -868,6 +895,9 @@
   }
 
   function handlePointerMove(event) {
+    const now = performance.now();
+    if (now - state.lastPointerCheck < PERFORMANCE.pointerInterval) return;
+    state.lastPointerCheck = now;
     const rect = state.renderer.domElement.getBoundingClientRect();
     state.pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     state.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -1492,6 +1522,7 @@
     state.height = dom.stage.clientHeight || window.innerHeight;
     state.camera.aspect = state.width / state.height;
     state.camera.updateProjectionMatrix();
+    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, PERFORMANCE.rendererPixelRatio));
     state.renderer.setSize(state.width, state.height);
   }
 
@@ -1581,8 +1612,9 @@
     });
   }
 
-  function animate() {
+  function animate(now = 0) {
     requestAnimationFrame(animate);
+    if (document.hidden) return;
     state.galaxy.rotation.y += 0.00058;
     state.controls.update();
     state.galaxy.children.forEach((child) => {
@@ -1599,8 +1631,11 @@
       }
     });
     updateRadarReveal();
-    updateLabels();
-    updateInteractionOverlays();
+    if (now - state.lastLabelUpdate > PERFORMANCE.labelInterval) {
+      state.lastLabelUpdate = now;
+      updateLabels();
+      updateInteractionOverlays();
+    }
     state.renderer.render(state.scene, state.camera);
   }
 
@@ -1763,13 +1798,13 @@
     let meteors = [];
     let ships = [];
     function resize() {
-      const ratio = window.devicePixelRatio || 1;
+      const ratio = Math.min(window.devicePixelRatio || 1, PERFORMANCE.backgroundPixelRatio);
       canvas.width = Math.floor(window.innerWidth * ratio);
       canvas.height = Math.floor(window.innerHeight * ratio);
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      stars = Array.from({ length: Math.min(760, Math.floor(window.innerWidth / 2.2)) }, (_, index) => {
+      stars = Array.from({ length: Math.min(PERFORMANCE.maxStars, Math.floor(window.innerWidth / 3.2)) }, (_, index) => {
         const hash = stableHash(`star-${index}-${window.innerWidth}`);
         return {
           x: hash % window.innerWidth,
@@ -1781,7 +1816,7 @@
           phase: (hash % 628) / 100,
         };
       });
-      dust = Array.from({ length: Math.min(180, Math.floor(window.innerWidth / 7)) }, (_, index) => {
+      dust = Array.from({ length: Math.min(PERFORMANCE.maxDust, Math.floor(window.innerWidth / 10)) }, (_, index) => {
         const hash = stableHash(`dust-${index}-${window.innerWidth}`);
         const diagonal = ((hash >>> 7) % 1000) / 1000;
         return {
@@ -1792,7 +1827,7 @@
           tint: ["116,192,252", "121,223,193", "255,143,163"][(hash >>> 20) % 3],
         };
       });
-      meteors = Array.from({ length: 9 }, (_, index) => {
+      meteors = Array.from({ length: PERFORMANCE.maxMeteors }, (_, index) => {
         const hash = stableHash(`meteor-${index}-${window.innerWidth}`);
         return {
           delay: (hash % 9000) + index * 1400,
@@ -1803,7 +1838,7 @@
           speed: 0.2 + ((hash >>> 21) % 80) / 250,
         };
       });
-      ships = Array.from({ length: 4 }, (_, index) => {
+      ships = Array.from({ length: PERFORMANCE.maxShips }, (_, index) => {
         const hash = stableHash(`ship-${index}-${window.innerWidth}`);
         return {
           x: (hash % window.innerWidth),
@@ -1814,7 +1849,11 @@
         };
       });
     }
+    let lastDraw = 0;
     function draw(time) {
+      requestAnimationFrame(draw);
+      if (document.hidden || time - lastDraw < PERFORMANCE.backgroundInterval) return;
+      lastDraw = time;
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
       context.save();
       context.globalCompositeOperation = "lighter";
@@ -1889,7 +1928,6 @@
         context.stroke();
         context.restore();
       }
-      requestAnimationFrame(draw);
     }
     resize();
     window.addEventListener("resize", resize);
