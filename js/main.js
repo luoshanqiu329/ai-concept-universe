@@ -18,21 +18,30 @@
     concept: { label: "AI概念", color: "#8cb7ff" },
     company: { label: "顶尖AI公司", color: "#ffffff" },
     person: { label: "关键人物", color: "#ffd43b" },
-    achievement: { label: "AI成就恒星", color: "#ffe066" },
+    achievement: { label: "AI里程碑", color: "#ffe066" },
   };
 
   const STORAGE_KEY = "ai-concept-universe:last-seen-version";
+  const LOW_PERFORMANCE_KEY = "ai-concept-universe:low-performance";
+  const MOTION_QUERY = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
   const CURRENT_YEAR = 2026;
   const EPOCH_YEAR = 1950;
   const PERFORMANCE = {
     rendererPixelRatio: 1.45,
+    lowRendererPixelRatio: 1,
     backgroundPixelRatio: 1.25,
+    lowBackgroundPixelRatio: 1,
     labelInterval: 64,
+    lowLabelInterval: 118,
     backgroundInterval: 48,
+    lowBackgroundInterval: 140,
+    lowRenderInterval: 34,
     pointerInterval: 36,
     maxLabels: 92,
     maxStars: 520,
+    lowMaxStars: 210,
     maxDust: 120,
+    lowMaxDust: 28,
     maxMeteors: 5,
     maxShips: 2,
   };
@@ -82,9 +91,12 @@
     hoveredId: null,
     selectedId: null,
     searchHitId: null,
+    searchClusterIds: new Set(),
     constellationId: null,
     viewMode: "panorama",
     isChroniclePlaying: false,
+    prefersReducedMotion: Boolean(MOTION_QUERY?.matches),
+    lowPerformance: initialLowPerformance(),
     chronicleTimer: 0,
     radar: null,
     scene: null,
@@ -103,6 +115,7 @@
     portraitCache: new Map(),
     lastLabelUpdate: 0,
     lastPointerCheck: 0,
+    lastRender: 0,
     width: window.innerWidth,
     height: window.innerHeight,
   };
@@ -114,6 +127,8 @@
     }
 
     if (window.lucide) window.lucide.createIcons();
+    setupMotionPreferenceWatcher();
+    applyPerformanceMode(false);
     setupDynamicUi();
     initStarfield();
     setupThree();
@@ -215,7 +230,7 @@
       alpha: true,
       powerPreference: "high-performance",
     });
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, PERFORMANCE.rendererPixelRatio));
+    state.renderer.setPixelRatio(currentRendererPixelRatio());
     state.renderer.setSize(state.width, state.height);
     state.renderer.outputColorSpace = THREE.SRGBColorSpace;
     state.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -237,7 +252,6 @@
     const warmRim = new THREE.PointLight(0xffd6a5, 0.82, 720);
     warmRim.position.set(-260, 120, -180);
     state.scene.add(warmRim);
-    addGalaxyMist();
   }
 
   function bindEvents() {
@@ -292,18 +306,39 @@
         <span><strong>0</strong><em>概念</em></span>
         <span><strong>0</strong><em>公司</em></span>
         <span><strong>0</strong><em>人物</em></span>
-        <span><strong>0</strong><em>光碑</em></span>
+        <span><strong>0</strong><em>里程碑</em></span>
       `;
       brandLockup.appendChild(archiveStats);
       dynamicDom.archiveStats = archiveStats;
+
+      const panelToggle = document.createElement("button");
+      panelToggle.id = "panel-toggle";
+      panelToggle.className = "panel-toggle";
+      panelToggle.type = "button";
+      panelToggle.innerHTML = '<i data-lucide="sliders-horizontal" aria-hidden="true"></i><span>筛选</span>';
+      brandLockup.appendChild(panelToggle);
+      dynamicDom.panelToggle = panelToggle;
+      panelToggle.addEventListener("click", () => setPanelCompact(!panel.classList.contains("is-compact")));
+      setPanelCompact(true);
     }
+
+    const performanceToggle = document.createElement("button");
+    performanceToggle.id = "performance-toggle";
+    performanceToggle.className = "icon-button performance-toggle";
+    performanceToggle.type = "button";
+    performanceToggle.innerHTML = '<i data-lucide="gauge" aria-hidden="true"></i>';
+    dom.reset?.insertAdjacentElement("afterend", performanceToggle);
+    dynamicDom.performanceToggle = performanceToggle;
+    performanceToggle.addEventListener("click", togglePerformanceMode);
+    updatePerformanceButton();
+    updateResponsiveText();
 
     const typeSection = dom.typeList?.closest(".panel-section");
     if (panel && typeSection) {
       const viewSection = document.createElement("div");
       viewSection.className = "panel-section view-mode-section";
       viewSection.innerHTML = `
-        <div class="section-title">观测视角</div>
+        <div class="section-title">浏览视图</div>
         <div id="view-mode-list" class="view-mode-list"></div>
       `;
       panel.insertBefore(viewSection, typeSection);
@@ -315,17 +350,24 @@
     constellationHud.className = "constellation-hud";
     constellationHud.hidden = true;
     constellationHud.innerHTML = `
-      <div>
+      <div class="constellation-copy">
         <span class="constellation-kicker">CONSTELLATION</span>
         <strong id="constellation-title"></strong>
+        <p id="constellation-summary"></p>
+        <div id="constellation-route" class="constellation-route"></div>
+        <div id="constellation-links" class="constellation-links"></div>
       </div>
       <button id="exit-constellation" class="ghost-button" type="button">退出星座</button>
     `;
     document.querySelector(".app-shell")?.appendChild(constellationHud);
     dynamicDom.constellationHud = constellationHud;
     dynamicDom.constellationTitle = constellationHud.querySelector("#constellation-title");
+    dynamicDom.constellationSummary = constellationHud.querySelector("#constellation-summary");
+    dynamicDom.constellationRoute = constellationHud.querySelector("#constellation-route");
+    dynamicDom.constellationLinks = constellationHud.querySelector("#constellation-links");
     dynamicDom.exitConstellation = constellationHud.querySelector("#exit-constellation");
     dynamicDom.exitConstellation.addEventListener("click", () => clearConstellation());
+    constellationHud.addEventListener("click", handleConstellationClick);
 
     const chronicleButton = document.createElement("button");
     chronicleButton.id = "chronicle-play";
@@ -381,6 +423,60 @@
     if (window.lucide) window.lucide.createIcons();
   }
 
+  function setPanelCompact(compact) {
+    const panel = document.querySelector(".filter-panel");
+    if (!panel) return;
+    panel.classList.toggle("is-compact", compact);
+    updatePanelToggle();
+  }
+
+  function updatePanelToggle() {
+    const panel = document.querySelector(".filter-panel");
+    if (!panel || !dynamicDom.panelToggle) return;
+    const compact = panel.classList.contains("is-compact");
+    dynamicDom.panelToggle.setAttribute("aria-expanded", String(!compact));
+    dynamicDom.panelToggle.title = compact ? "展开筛选" : "收起筛选";
+    dynamicDom.panelToggle.querySelector("span").textContent = compact ? "筛选" : "收起";
+  }
+
+  function setupMotionPreferenceWatcher() {
+    if (!MOTION_QUERY) return;
+    const handleChange = () => {
+      state.prefersReducedMotion = Boolean(MOTION_QUERY.matches);
+      state.lowPerformance = state.prefersReducedMotion || safeStorageGet(LOW_PERFORMANCE_KEY) === "1";
+      applyPerformanceMode(true);
+    };
+    MOTION_QUERY.addEventListener?.("change", handleChange);
+  }
+
+  function togglePerformanceMode() {
+    if (state.prefersReducedMotion) return;
+    state.lowPerformance = !state.lowPerformance;
+    safeStorageSet(LOW_PERFORMANCE_KEY, state.lowPerformance ? "1" : "0");
+    applyPerformanceMode(true);
+  }
+
+  function applyPerformanceMode(syncScene = true) {
+    document.body.classList.toggle("is-low-motion", state.lowPerformance);
+    updatePerformanceButton();
+    if (!syncScene) return;
+    if (state.renderer && state.camera) handleResize();
+    window.dispatchEvent(new Event("resize"));
+  }
+
+  function updatePerformanceButton() {
+    if (!dynamicDom.performanceToggle) return;
+    const active = state.lowPerformance;
+    dynamicDom.performanceToggle.classList.toggle("is-active", active);
+    dynamicDom.performanceToggle.disabled = state.prefersReducedMotion;
+    dynamicDom.performanceToggle.title = state.prefersReducedMotion
+      ? "系统减少动态效果已启用"
+      : active
+        ? "低性能模式已开启"
+        : "开启低性能模式";
+    dynamicDom.performanceToggle.setAttribute("aria-label", dynamicDom.performanceToggle.title);
+  }
+
   function buildControls() {
     buildViewModeControls();
     renderArchiveStats();
@@ -392,11 +488,11 @@
   function buildViewModeControls() {
     if (!dynamicDom.viewModeList) return;
     const modes = [
-      { mode: "panorama", label: "全景", detail: "星系", icon: "orbit" },
+      { mode: "panorama", label: "全景", detail: "总览", icon: "orbit" },
       { mode: "chronicle", label: "编年", detail: "时间", icon: "history" },
-      { mode: "hot", label: "热点", detail: "新星", icon: "flame" },
-      { mode: "company", label: "公司", detail: "星港", icon: "building-2" },
-      { mode: "person", label: "人物", detail: "先驱", icon: "user-round" },
+      { mode: "hot", label: "热点", detail: "趋势", icon: "flame" },
+      { mode: "company", label: "公司", detail: "机构", icon: "building-2" },
+      { mode: "person", label: "人物", detail: "研究者", icon: "user-round" },
     ];
     dynamicDom.viewModeList.innerHTML = modes
       .map(({ mode, label, detail, icon }) => `
@@ -430,7 +526,7 @@
       [meta.conceptCount || stats.conceptCount || state.items.filter((item) => item.kind === "concept").length, "概念"],
       [meta.companyCount || stats.companyCount || state.items.filter((item) => item.kind === "company").length, "公司"],
       [meta.peopleCount || stats.peopleCount || state.items.filter((item) => item.kind === "person").length, "人物"],
-      [meta.achievementCount || stats.achievementCount || state.items.filter((item) => item.kind === "achievement").length, "光碑"],
+      [meta.achievementCount || stats.achievementCount || state.items.filter((item) => item.kind === "achievement").length, "里程碑"],
     ];
     dynamicDom.archiveStats.innerHTML = values
       .map(([value, label]) => `<span><strong>${escapeHtml(value)}</strong><em>${escapeHtml(label)}</em></span>`)
@@ -508,21 +604,21 @@
   }
 
   function addItemMeshes() {
-    const sphere = new THREE.SphereGeometry(1, 24, 18);
     state.items.forEach((item) => {
       const color = itemColor(item);
       const size = nodeSize(item);
-      const material = new THREE.MeshBasicMaterial({
-        color,
+      const material = new THREE.SpriteMaterial({
+        color: 0xffffff,
+        map: planetTexture(item, color),
         transparent: true,
-        opacity: item.kind === "achievement" ? 0.98 : 0.9,
+        opacity: item.kind === "achievement" ? 0.97 : 0.92,
         depthWrite: false,
       });
-      const mesh = new THREE.Mesh(sphere, material);
-      mesh.scale.setScalar(size);
+      const mesh = new THREE.Sprite(material);
+      mesh.scale.setScalar(size * 2.12);
       mesh.position.set(item.position.x, item.position.y, item.position.z);
       mesh.userData.itemId = item.id;
-      mesh.userData.baseScale = size;
+      mesh.userData.baseScale = size * 2.12;
       mesh.userData.baseOpacity = material.opacity;
       mesh.userData.pulse = (stableHash(`pulse-${item.id}`) % 1000) / 1000;
       state.galaxy.add(mesh);
@@ -532,16 +628,18 @@
           map: haloTexture(),
           color,
           transparent: true,
-          opacity: item.kind === "achievement" ? 0.22 : item.kind === "company" ? 0.19 : item.kind === "person" ? 0.17 : 0.125,
+          opacity: item.kind === "achievement" ? 0.15 : item.kind === "company" ? 0.12 : item.kind === "person" ? 0.11 : 0.075,
           depthWrite: false,
           depthTest: false,
           blending: THREE.AdditiveBlending,
         })
       );
-      halo.scale.setScalar(size * (item.kind === "achievement" ? 7.2 : item.kind === "company" ? 5.6 : 4.7));
+      halo.scale.setScalar(size * (item.kind === "achievement" ? 5.1 : item.kind === "company" ? 4.05 : 3.35));
       halo.position.copy(mesh.position);
       halo.userData.follows = mesh;
       halo.userData.baseOpacity = halo.material.opacity;
+      halo.userData.baseScale = halo.scale.x;
+      halo.userData.planetHalo = true;
       state.galaxy.add(halo);
 
       if (item.kind === "achievement") {
@@ -758,18 +856,19 @@
     const halfH = state.height / 2;
     const vector = new THREE.Vector3();
     const candidates = [];
+    const labelClusterIds = emphasizedLabelIds();
     state.items.forEach((item) => {
       const label = state.labels.get(item.id);
       const mesh = state.meshes.get(item.id);
       if (!label || !mesh || !mesh.visible) {
-        if (label) label.classList.remove("is-visible", "is-focus");
+        if (label) label.classList.remove("is-visible", "is-focus", "is-cluster", "is-new");
         return;
       }
-      const focus = item.id === state.hoveredId || item.id === state.selectedId || item.id === state.searchHitId;
+      const focus = item.id === state.hoveredId || item.id === state.selectedId || item.id === state.searchHitId || labelClusterIds.has(item.id);
       vector.copy(mesh.position).project(state.camera);
       const isBehind = vector.z > 1;
       if (isBehind) {
-        label.classList.remove("is-visible", "is-focus");
+        label.classList.remove("is-visible", "is-focus", "is-cluster", "is-new");
         return;
       }
       const x = vector.x * halfW + halfW;
@@ -792,14 +891,13 @@
     });
 
     const placed = [];
-    const constellationIds = constellationRelatedIds();
     candidates
       .sort((a, b) => b.priority - a.priority || b.item.heat - a.item.heat || a.item.name.localeCompare(b.item.name))
       .forEach((candidate, index) => {
         const { item, label, rect, x, y } = candidate;
-        const focus = candidate.focus || constellationIds.has(item.id);
+        const focus = candidate.focus || labelClusterIds.has(item.id);
         if (index >= PERFORMANCE.maxLabels && !focus) {
-          label.classList.remove("is-visible", "is-focus", "is-revealed");
+          label.classList.remove("is-visible", "is-focus", "is-revealed", "is-cluster", "is-new");
           return;
         }
         const revealed = isRadarRevealed(item.id);
@@ -811,6 +909,8 @@
         label.style.zIndex = String(focus ? 1000 : Math.round(candidate.priority));
         label.classList.toggle("is-visible", visible);
         label.classList.toggle("is-focus", focus);
+        label.classList.toggle("is-cluster", labelClusterIds.has(item.id) && item.id !== state.selectedId && item.id !== state.searchHitId && item.id !== state.constellationId);
+        label.classList.toggle("is-new", isEmergingItem(item));
         label.classList.toggle("is-revealed", revealed);
         if (visible) placed.push(candidate);
       });
@@ -819,7 +919,9 @@
   function labelPriority(item, focus) {
     if (focus) return 10000;
     const kindBoost = { company: 420, person: 360, achievement: 300, concept: 0 }[item.kind] || 0;
-    return kindBoost + Number(item.heat || 0);
+    const clusterBoost = state.searchClusterIds.has(item.id) ? 950 : 0;
+    const newBoost = isEmergingItem(item) ? 320 : 0;
+    return clusterBoost + newBoost + kindBoost + Number(item.heat || 0);
   }
 
   function rectsOverlap(a, b, padding = 0) {
@@ -831,7 +933,8 @@
     const chronicleMode = state.viewMode === "chronicle";
     const constellationIds = constellationRelatedIds();
     const hoverRelated = relatedIds(state.hoveredId || state.searchHitId);
-    const focusRelated = constellationIds.size ? constellationIds : hoverRelated;
+    const searchRelated = state.searchClusterIds.size ? state.searchClusterIds : relatedIds(state.searchHitId);
+    const focusRelated = constellationIds.size ? constellationIds : searchRelated.size ? searchRelated : hoverRelated;
     document.body.classList.toggle("is-chronicle-mode", chronicleMode);
     state.items.forEach((item) => {
       const mesh = state.meshes.get(item.id);
@@ -843,6 +946,7 @@
       mesh.material.opacity = visible ? (focused ? 0.95 : constellationIds.size ? 0.055 : 0.16) : 0;
       const scaleBoost = item.id === state.constellationId ? 1.5 : item.id === state.hoveredId || item.id === state.searchHitId ? 1.36 : 1;
       const scale = mesh.userData.baseScale * scaleBoost;
+      mesh.userData.focusBoost = Math.max(0, scaleBoost - 1);
       mesh.scale.setScalar(scale);
     });
 
@@ -852,7 +956,11 @@
         child.visible = follows.visible;
         if (child.material) {
           const focusRatio = follows.material.opacity / (follows.userData.baseOpacity || 0.9);
-          child.material.opacity = (child.userData.baseOpacity || 0.12) * clampNumber(focusRatio, 0.12, 1.18);
+          const boost = follows.userData.focusBoost || 0;
+          child.material.opacity = (child.userData.baseOpacity || 0.12) * clampNumber(focusRatio + boost * 0.7, 0.1, 1.35);
+          if (child.userData.planetHalo && child.userData.baseScale) {
+            child.scale.setScalar(child.userData.baseScale * (1 + boost * 0.32));
+          }
         }
         if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
       }
@@ -906,10 +1014,8 @@
     return set;
   }
 
-  function constellationRelatedIds() {
-    if (!state.constellationId) return new Set();
-    const direct = relatedIds(state.constellationId);
-    const root = state.itemById.get(state.constellationId);
+  function expandedRelatedIds(root) {
+    const direct = relatedIds(root?.id);
     if (!root) return direct;
     state.items.forEach((item) => {
       if (item.id === root.id) return;
@@ -918,7 +1024,54 @@
       const sameCompany = (item.companies || []).some((id) => id === root.id || (root.companies || []).includes(id));
       if (sameConcept || rootConcept || sameCompany) direct.add(item.id);
     });
+    Array.from(direct)
+      .map((id) => state.itemById.get(id))
+      .filter((item) => item && item.id !== root.id)
+      .sort((a, b) => kindRank(a.kind) - kindRank(b.kind) || b.heat - a.heat)
+      .slice(0, 8)
+      .forEach((item) => relatedIds(item.id).forEach((id) => direct.add(id)));
+    semanticFamilyIds(root).forEach((id) => direct.add(id));
     return direct;
+  }
+
+  function semanticFamilyIds(root) {
+    const text = searchableText(root);
+    const ids = new Set();
+    const add = (id) => {
+      if (state.itemById.has(id)) ids.add(id);
+    };
+    if (text.includes("hook")) {
+      ["agent-hook", "webhook", "trigger", "workflow", "workflow-orchestration", "agentic-workflow"].forEach(add);
+    }
+    if (text.includes("workflow")) {
+      ["workflow", "agentic-workflow", "autonomous-workflow", "workflow-orchestration", "agent-hook", "webhook", "trigger"].forEach(add);
+    }
+    if (text.includes("trigger")) {
+      ["trigger", "webhook", "workflow", "agent-hook", "agent-loop"].forEach(add);
+    }
+    return ids;
+  }
+
+  function emphasizedLabelIds() {
+    const ids = new Set();
+    constellationRelatedIds().forEach((id) => ids.add(id));
+    state.searchClusterIds.forEach((id) => ids.add(id));
+    if (state.radar) {
+      ids.add(state.radar.itemId);
+      state.radar.ids.forEach((id) => ids.add(id));
+    }
+    return ids;
+  }
+
+  function isEmergingItem(item) {
+    const changed = state.payload?.meta?.changedConcepts || [];
+    if (changed.some((change) => change.id === item.id)) return true;
+    if (item.kind !== "concept") return false;
+    return Number(item.year || 0) >= CURRENT_YEAR - 1 && Number(item.heat || 0) >= 58;
+  }
+
+  function constellationRelatedIds() {
+    return expandedRelatedIds(state.itemById.get(state.constellationId));
   }
 
   function updateConstellationHud(constellationIds) {
@@ -926,9 +1079,15 @@
     const root = state.itemById.get(state.constellationId);
     dynamicDom.constellationHud.hidden = !root;
     if (!root) return;
-    dynamicDom.constellationHud.querySelector(".constellation-kicker").textContent = "CONSTELLATION";
+    const story = constellationStory(root, constellationIds);
+    dynamicDom.constellationHud.querySelector(".constellation-kicker").textContent = "聚焦星座";
     dynamicDom.exitConstellation.textContent = "退出聚焦";
-    dynamicDom.constellationTitle.textContent = `${root.name} 星座 · ${Math.max(0, constellationIds.size - 1)} related`;
+    dynamicDom.constellationTitle.textContent = `${root.name} 星座`;
+    dynamicDom.constellationSummary.textContent = story.summary;
+    dynamicDom.constellationRoute.innerHTML = story.route.map((name) => `<span>${escapeHtml(name)}</span>`).join("");
+    dynamicDom.constellationLinks.innerHTML = story.links
+      .map((item) => `<button class="constellation-chip" type="button" data-target="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`)
+      .join("");
   }
 
   function enterConstellation(item) {
@@ -939,6 +1098,31 @@
   function clearConstellation() {
     state.constellationId = null;
     applyFilters();
+  }
+
+  function constellationStory(root, constellationIds) {
+    const members = Array.from(constellationIds)
+      .map((id) => state.itemById.get(id))
+      .filter((item) => item && item.id !== root.id)
+      .sort((a, b) => kindRank(a.kind) - kindRank(b.kind) || b.heat - a.heat || a.name.localeCompare(b.name));
+    const achievements = members.filter((item) => item.kind === "achievement").slice(0, 2);
+    const people = members.filter((item) => item.kind === "person").slice(0, 2);
+    const companies = members.filter((item) => item.kind === "company").slice(0, 2);
+    const concepts = members.filter((item) => item.kind === "concept").slice(0, 4);
+    const route = [root, ...achievements, ...people, ...concepts].map((item) => item.name).slice(0, 6);
+    const links = [...achievements, ...people, ...concepts, ...companies].slice(0, 8);
+    const anchor = achievements[0]?.name || people[0]?.name || concepts[0]?.name || "相关概念";
+    const base = root.definition || root.role || root.impact || "该节点是 AI 知识图谱中的关键档案。";
+    const summary = `${base} 当前保留 ${Math.max(0, constellationIds.size - 1)} 个强关联节点，优先呈现 ${anchor} 与它的演化路径。`;
+    return { route, links, summary };
+  }
+
+  function handleConstellationClick(event) {
+    const chip = event.target.closest("[data-target]");
+    if (!chip) return;
+    const item = state.itemById.get(chip.dataset.target);
+    if (!item) return;
+    activateItem(item);
   }
 
   function kindRank(kind) {
@@ -1022,7 +1206,7 @@
         <p>${escapeHtml(event.summary)}</p>
       </div>
       <div class="chronicle-focus-links">
-        ${achievement ? clickableChronicleChip(achievement.id, "成就光碑") : ""}
+        ${achievement ? clickableChronicleChip(achievement.id, "里程碑") : ""}
         ${concepts.map((item) => clickableChronicleChip(item.id, item.name)).join("")}
       </div>
     `;
@@ -1079,13 +1263,19 @@
     const query = dom.search.value.trim().toLowerCase();
     if (!query) {
       state.searchHitId = null;
+      state.searchClusterIds = new Set();
       applyFilters();
       return;
     }
     const exact = state.items.find((item) => item.name.toLowerCase() === query || item.id.toLowerCase() === query || (item.aliases || []).some((alias) => String(alias).toLowerCase() === query));
     const fuzzy = state.items.find((item) => searchableText(item).includes(query) || (item.aliases || []).some((alias) => query.includes(String(alias).toLowerCase())));
     const item = exact || fuzzy;
-    if (!item) return;
+    if (!item) {
+      state.searchHitId = null;
+      state.searchClusterIds = new Set();
+      applyFilters();
+      return;
+    }
     if (item.year > state.selectedYear) {
       state.selectedYear = item.year;
       dom.timeline.value = String(item.year);
@@ -1094,6 +1284,7 @@
     if (item.kind === "concept") state.activeCategories.add(item.category);
     buildControls();
     state.searchHitId = item.id;
+    state.searchClusterIds = expandedRelatedIds(item);
     applyFilters();
     focusOnItem(item);
     openInfoCard(item);
@@ -1254,7 +1445,7 @@
     } else if (item.kind === "achievement") {
       rows.push(["发生年份", item.first_appear || item.year || "-"]);
       rows.push(["关联概念", (item.concepts || []).map(nameForId).filter(Boolean).slice(0, 2).join(" / ") || "-"]);
-      rows.push(["星体类型", "关键AI成就恒星"]);
+      rows.push(["档案类型", "AI里程碑"]);
       rows.push(["影响", item.impact || "推动 AI 范式演化"]);
     } else {
       rows.push(["关键角色", item.role || "-"]);
@@ -1321,6 +1512,7 @@
     if (item.kind === "concept") state.activeCategories.add(item.category);
     buildControls();
     state.searchHitId = item.id;
+    state.searchClusterIds = expandedRelatedIds(item);
     openInfoCard(item);
     focusOnItem(item);
     applyFilters();
@@ -1330,6 +1522,15 @@
     if (!item) {
       state.radar = null;
       updateInteractionOverlays();
+      return;
+    }
+    if (state.lowPerformance) {
+      state.radar = null;
+      if (dynamicDom.radarLayer) {
+        dynamicDom.radarLayer.classList.remove("is-active");
+        dynamicDom.radarLayer.hidden = true;
+      }
+      renderOrbitalMenu(item);
       return;
     }
     const ids = orderedRelatedIds(item);
@@ -1469,6 +1670,7 @@
 
   function resetView() {
     state.searchHitId = null;
+    state.searchClusterIds = new Set();
     state.constellationId = null;
     state.selectedId = null;
     state.radar = null;
@@ -1548,6 +1750,13 @@
   }
 
   function animateCamera(cameraTarget, controlsTarget, duration) {
+    if (state.lowPerformance || duration <= 0) {
+      state.camera.position.copy(cameraTarget);
+      state.controls.target.copy(controlsTarget);
+      state.camera.lookAt(state.controls.target);
+      state.controls.syncFromCamera();
+      return;
+    }
     const startCamera = state.camera.position.clone();
     const startTarget = state.controls.target.clone();
     const start = performance.now();
@@ -1573,8 +1782,14 @@
     state.height = dom.stage.clientHeight || window.innerHeight;
     state.camera.aspect = state.width / state.height;
     state.camera.updateProjectionMatrix();
-    state.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, PERFORMANCE.rendererPixelRatio));
+    state.renderer.setPixelRatio(currentRendererPixelRatio());
     state.renderer.setSize(state.width, state.height);
+    updateResponsiveText();
+  }
+
+  function updateResponsiveText() {
+    if (!dom.search) return;
+    dom.search.placeholder = window.innerWidth < 560 ? "搜索节点" : "搜索概念 / 公司 / 人物";
   }
 
   function createGalaxyControls(camera, element) {
@@ -1666,23 +1881,26 @@
   function animate(now = 0) {
     requestAnimationFrame(animate);
     if (document.hidden) return;
-    state.galaxy.rotation.y += 0.00058;
+    const renderInterval = state.lowPerformance ? PERFORMANCE.lowRenderInterval : 0;
+    if (renderInterval && now - state.lastRender < renderInterval) return;
+    state.lastRender = now;
+    if (!state.lowPerformance) state.galaxy.rotation.y += 0.00058;
     state.controls.update();
     state.galaxy.children.forEach((child) => {
       if (child.userData?.follows) {
         child.position.copy(child.userData.follows.position);
         if (child.geometry?.type === "RingGeometry") child.lookAt(state.camera.position);
-        if (child.userData.starburst && child.material) child.material.rotation += 0.0016;
+        if (!state.lowPerformance && child.userData.starburst && child.material) child.material.rotation += 0.0016;
       }
       if (child.userData?.coreRing) {
-        child.rotation.z += 0.00035;
+        if (!state.lowPerformance) child.rotation.z += 0.00035;
       }
       if (child.userData?.mist) {
-        child.rotation.y += 0.00012;
+        if (!state.lowPerformance) child.rotation.y += 0.00012;
       }
     });
-    updateRadarReveal();
-    if (now - state.lastLabelUpdate > PERFORMANCE.labelInterval) {
+    if (!state.lowPerformance) updateRadarReveal();
+    if (now - state.lastLabelUpdate > currentLabelInterval()) {
       state.lastLabelUpdate = now;
       updateLabels();
       updateInteractionOverlays();
@@ -1783,6 +2001,38 @@
       .toLowerCase();
   }
 
+  function initialLowPerformance() {
+    return Boolean(MOTION_QUERY?.matches) || safeStorageGet(LOW_PERFORMANCE_KEY) === "1";
+  }
+
+  function safeStorageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  function safeStorageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      // Storage can be unavailable in strict privacy modes.
+    }
+  }
+
+  function currentRendererPixelRatio() {
+    return Math.min(window.devicePixelRatio || 1, state.lowPerformance ? PERFORMANCE.lowRendererPixelRatio : PERFORMANCE.rendererPixelRatio);
+  }
+
+  function currentLabelInterval() {
+    return state.lowPerformance ? PERFORMANCE.lowLabelInterval : PERFORMANCE.labelInterval;
+  }
+
+  function currentBackgroundInterval() {
+    return state.lowPerformance ? PERFORMANCE.lowBackgroundInterval : PERFORMANCE.backgroundInterval;
+  }
+
   function clearGroup(group) {
     while (group.children.length) {
       const child = group.children.pop();
@@ -1790,6 +2040,123 @@
       child.material?.dispose?.();
     }
     dom.labelLayer.innerHTML = "";
+  }
+
+  const planetTextureCache = new Map();
+  function planetTexture(item, color) {
+    const variant = stableHash(`${item.kind}-${item.category || ""}-${item.id}`) % 7;
+    const key = `${item.kind}-${item.category || ""}-${color.getHexString()}-${variant}`;
+    if (planetTextureCache.has(key)) return planetTextureCache.get(key);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 192;
+    canvas.height = 192;
+    const context = canvas.getContext("2d");
+    const center = 96;
+    const radius = 70;
+    const base = color.clone();
+    const light = color.clone().lerp(new THREE.Color("#ffffff"), item.kind === "company" ? 0.78 : 0.56);
+    const dark = color.clone().multiplyScalar(item.kind === "achievement" ? 0.42 : 0.2);
+    const rim = color.clone().lerp(new THREE.Color("#ffffff"), 0.64);
+
+    context.clearRect(0, 0, 192, 192);
+    context.save();
+    context.beginPath();
+    context.arc(center, center, radius, 0, Math.PI * 2);
+    context.clip();
+
+    const baseGradient = context.createRadialGradient(56, 48, 8, 114, 122, 106);
+    baseGradient.addColorStop(0, rgbString(light));
+    baseGradient.addColorStop(0.34, rgbString(base));
+    baseGradient.addColorStop(0.72, rgbString(base.clone().multiplyScalar(0.62)));
+    baseGradient.addColorStop(1, rgbString(dark));
+    context.fillStyle = baseGradient;
+    context.fillRect(0, 0, 192, 192);
+
+    const bandCount = item.kind === "achievement" ? 4 : item.kind === "company" ? 3 : 5;
+    for (let index = 0; index < bandCount; index += 1) {
+      const hash = stableHash(`${key}-band-${index}`);
+      const y = 44 + (hash % 98);
+      const alpha = 0.055 + ((hash >>> 8) % 16) / 100;
+      const bandColor = index % 2 ? light.clone().lerp(base, 0.36) : dark.clone().lerp(base, 0.28);
+      context.fillStyle = rgbString(bandColor, alpha);
+      context.beginPath();
+      context.ellipse(center, y, 92, 3.2 + ((hash >>> 16) % 22) / 10, (((hash >>> 24) % 100) / 100 - 0.5) * 0.28, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    for (let index = 0; index < 44; index += 1) {
+      const hash = stableHash(`${key}-continent-${index}`);
+      const angle = ((hash % 628) / 100);
+      const distance = Math.sqrt(((hash >>> 8) % 1000) / 1000) * radius * 0.86;
+      const x = center + Math.cos(angle) * distance;
+      const y = center + Math.sin(angle) * distance;
+      const w = 4 + ((hash >>> 18) % 22) / 4;
+      const h = 1.5 + ((hash >>> 24) % 16) / 4;
+      context.fillStyle = rgbString(index % 3 ? dark.clone().lerp(base, 0.55) : light.clone().lerp(base, 0.52), 0.08);
+      context.beginPath();
+      context.ellipse(x, y, w, h, angle * 0.35, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    for (let index = 0; index < 120; index += 1) {
+      const hash = stableHash(`${key}-grain-${index}`);
+      const angle = ((hash % 628) / 100);
+      const distance = Math.sqrt(((hash >>> 8) % 1000) / 1000) * radius * 0.96;
+      const x = center + Math.cos(angle) * distance;
+      const y = center + Math.sin(angle) * distance;
+      const grainRadius = 0.35 + ((hash >>> 16) % 20) / 22;
+      const useLight = ((hash >>> 22) & 1) === 1;
+      context.fillStyle = rgbString(useLight ? light : dark, useLight ? 0.16 : 0.14);
+      context.beginPath();
+      context.arc(x, y, grainRadius, 0, Math.PI * 2);
+      context.fill();
+    }
+
+    const daySide = context.createRadialGradient(54, 46, 4, 66, 58, 62);
+    daySide.addColorStop(0, "rgba(255,255,255,0.34)");
+    daySide.addColorStop(0.28, "rgba(255,255,255,0.08)");
+    daySide.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = daySide;
+    context.fillRect(0, 0, 192, 192);
+
+    const terminator = context.createLinearGradient(46, 36, 158, 154);
+    terminator.addColorStop(0, "rgba(255,255,255,0)");
+    terminator.addColorStop(0.54, "rgba(0,0,0,0.08)");
+    terminator.addColorStop(1, "rgba(0,0,0,0.58)");
+    context.fillStyle = terminator;
+    context.fillRect(0, 0, 192, 192);
+
+    const vignette = context.createRadialGradient(54, 48, 20, center, center, radius + 8);
+    vignette.addColorStop(0, "rgba(255,255,255,0.04)");
+    vignette.addColorStop(0.64, "rgba(255,255,255,0)");
+    vignette.addColorStop(1, "rgba(0,0,0,0.5)");
+    context.fillStyle = vignette;
+    context.fillRect(0, 0, 192, 192);
+    context.restore();
+
+    const atmosphere = context.createRadialGradient(center, center, radius - 7, center, center, radius + 18);
+    atmosphere.addColorStop(0, rgbString(rim, 0.08));
+    atmosphere.addColorStop(0.42, rgbString(rim, item.kind === "achievement" ? 0.36 : 0.22));
+    atmosphere.addColorStop(1, "rgba(255,255,255,0)");
+    context.fillStyle = atmosphere;
+    context.beginPath();
+    context.arc(center, center, radius + 18, 0, Math.PI * 2);
+    context.fill();
+
+    context.strokeStyle = rgbString(rim, item.kind === "achievement" ? 0.62 : 0.42);
+    context.lineWidth = item.kind === "company" ? 2.6 : 1.8;
+    context.beginPath();
+    context.arc(center, center, radius - 0.5, 0, Math.PI * 2);
+    context.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.generateMipmaps = false;
+    texture.minFilter = THREE.LinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    planetTextureCache.set(key, texture);
+    return texture;
   }
 
   let cachedHalo = null;
@@ -1808,6 +2175,10 @@
     context.fillRect(0, 0, 128, 128);
     cachedHalo = new THREE.CanvasTexture(canvas);
     return cachedHalo;
+  }
+
+  function rgbString(color, alpha = 1) {
+    return `rgba(${Math.round(color.r * 255)},${Math.round(color.g * 255)},${Math.round(color.b * 255)},${alpha})`;
   }
 
   let cachedStarburst = null;
@@ -1849,13 +2220,15 @@
     let meteors = [];
     let ships = [];
     function resize() {
-      const ratio = Math.min(window.devicePixelRatio || 1, PERFORMANCE.backgroundPixelRatio);
+      const ratio = Math.min(window.devicePixelRatio || 1, state.lowPerformance ? PERFORMANCE.lowBackgroundPixelRatio : PERFORMANCE.backgroundPixelRatio);
       canvas.width = Math.floor(window.innerWidth * ratio);
       canvas.height = Math.floor(window.innerHeight * ratio);
       canvas.style.width = `${window.innerWidth}px`;
       canvas.style.height = `${window.innerHeight}px`;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      stars = Array.from({ length: Math.min(PERFORMANCE.maxStars, Math.floor(window.innerWidth / 3.2)) }, (_, index) => {
+      const starLimit = state.lowPerformance ? PERFORMANCE.lowMaxStars : PERFORMANCE.maxStars;
+      const dustLimit = state.lowPerformance ? PERFORMANCE.lowMaxDust : PERFORMANCE.maxDust;
+      stars = Array.from({ length: Math.min(starLimit, Math.floor(window.innerWidth / 3.2)) }, (_, index) => {
         const hash = stableHash(`star-${index}-${window.innerWidth}`);
         return {
           x: hash % window.innerWidth,
@@ -1867,7 +2240,7 @@
           phase: (hash % 628) / 100,
         };
       });
-      dust = Array.from({ length: Math.min(PERFORMANCE.maxDust, Math.floor(window.innerWidth / 10)) }, (_, index) => {
+      dust = Array.from({ length: Math.min(dustLimit, Math.floor(window.innerWidth / 10)) }, (_, index) => {
         const hash = stableHash(`dust-${index}-${window.innerWidth}`);
         const diagonal = ((hash >>> 7) % 1000) / 1000;
         return {
@@ -1878,7 +2251,7 @@
           tint: ["116,192,252", "121,223,193", "255,143,163"][(hash >>> 20) % 3],
         };
       });
-      meteors = Array.from({ length: PERFORMANCE.maxMeteors }, (_, index) => {
+      meteors = Array.from({ length: state.lowPerformance ? 0 : PERFORMANCE.maxMeteors }, (_, index) => {
         const hash = stableHash(`meteor-${index}-${window.innerWidth}`);
         return {
           delay: (hash % 9000) + index * 1400,
@@ -1889,21 +2262,23 @@
           speed: 0.2 + ((hash >>> 21) % 80) / 250,
         };
       });
-      ships = Array.from({ length: PERFORMANCE.maxShips }, (_, index) => {
+      ships = Array.from({ length: state.lowPerformance ? 0 : PERFORMANCE.maxShips }, (_, index) => {
         const hash = stableHash(`ship-${index}-${window.innerWidth}`);
         return {
           x: (hash % window.innerWidth),
           y: ((hash >>> 8) % window.innerHeight),
-          scale: 0.72 + ((hash >>> 15) % 70) / 100,
+          scale: 0.82 + ((hash >>> 15) % 54) / 100,
           drift: 0.006 + ((hash >>> 22) % 15) / 1000,
           phase: (hash % 628) / 100,
+          angle: (((hash >>> 12) % 100) / 100 - 0.5) * 0.7,
+          variant: (hash >>> 26) % 3,
         };
       });
     }
     let lastDraw = 0;
     function draw(time) {
       requestAnimationFrame(draw);
-      if (document.hidden || time - lastDraw < PERFORMANCE.backgroundInterval) return;
+      if (document.hidden || time - lastDraw < currentBackgroundInterval()) return;
       lastDraw = time;
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
       context.save();
@@ -1916,7 +2291,9 @@
       }
       context.restore();
       for (const star of stars) {
-        const alpha = (star.bright ? 0.34 : 0.16) + Math.sin(time * star.speed * 0.01 + star.phase) * (star.bright ? 0.18 : 0.09);
+        const alpha = state.lowPerformance
+          ? star.bright ? 0.32 : 0.16
+          : (star.bright ? 0.34 : 0.16) + Math.sin(time * star.speed * 0.01 + star.phase) * (star.bright ? 0.18 : 0.09);
         context.beginPath();
         context.fillStyle = `rgba(${star.tint}, ${alpha})`;
         context.arc(star.x, star.y, star.r, 0, Math.PI * 2);
@@ -1960,29 +2337,130 @@
       for (const ship of ships) {
         const driftX = Math.sin(time * ship.drift * 0.001 + ship.phase) * 26;
         const driftY = Math.cos(time * ship.drift * 0.001 + ship.phase) * 12;
-        const alpha = 0.05 + Math.sin(time * 0.0008 + ship.phase) * 0.025;
+        const alpha = 0.11 + Math.sin(time * 0.0008 + ship.phase) * 0.035;
         context.save();
         context.translate(ship.x + driftX, ship.y + driftY);
-        context.rotate(Math.sin(ship.phase) * 0.9);
+        context.rotate(ship.angle + Math.sin(time * 0.0002 + ship.phase) * 0.05);
         context.scale(ship.scale, ship.scale);
         context.globalAlpha = Math.max(0.02, alpha);
-        context.fillStyle = "rgba(220,235,255,0.75)";
-        context.strokeStyle = "rgba(116,192,252,0.68)";
-        context.lineWidth = 1;
-        context.beginPath();
-        context.moveTo(0, -7);
-        context.lineTo(18, 0);
-        context.lineTo(0, 7);
-        context.lineTo(4, 0);
-        context.closePath();
-        context.fill();
-        context.stroke();
+        drawSpaceship(context, ship.variant, time + ship.phase * 1000);
         context.restore();
       }
     }
     resize();
     window.addEventListener("resize", resize);
     requestAnimationFrame(draw);
+  }
+
+  function drawSpaceship(context, variant, time) {
+    const flamePulse = 0.72 + Math.sin(time * 0.006) * 0.28;
+    context.shadowColor = "rgba(116,192,252,0.42)";
+    context.shadowBlur = 9;
+    context.save();
+    context.globalCompositeOperation = "lighter";
+    const flame = context.createLinearGradient(-31, 0, -10, 0);
+    flame.addColorStop(0, "rgba(116,192,252,0)");
+    flame.addColorStop(0.4, "rgba(116,192,252,0.34)");
+    flame.addColorStop(1, "rgba(255,224,102,0.7)");
+    context.fillStyle = flame;
+    context.beginPath();
+    context.moveTo(-12, -3.2);
+    context.lineTo(-28 - flamePulse * 5, 0);
+    context.lineTo(-12, 3.2);
+    context.closePath();
+    context.fill();
+    context.restore();
+
+    const hull = context.createLinearGradient(-18, -8, 24, 9);
+    hull.addColorStop(0, "rgba(116,192,252,0.24)");
+    hull.addColorStop(0.36, "rgba(238,243,255,0.88)");
+    hull.addColorStop(1, "rgba(121,223,193,0.34)");
+    context.strokeStyle = "rgba(213,228,255,0.72)";
+    context.lineWidth = 1.15;
+
+    if (variant === 1) {
+      context.fillStyle = "rgba(116,192,252,0.3)";
+      context.beginPath();
+      context.moveTo(-10, -7);
+      context.lineTo(3, -15);
+      context.lineTo(7, -4);
+      context.closePath();
+      context.fill();
+      context.beginPath();
+      context.moveTo(-10, 7);
+      context.lineTo(3, 15);
+      context.lineTo(7, 4);
+      context.closePath();
+      context.fill();
+      context.fillStyle = hull;
+      context.beginPath();
+      context.moveTo(-20, -3.5);
+      context.quadraticCurveTo(0, -8, 28, 0);
+      context.quadraticCurveTo(0, 8, -20, 3.5);
+      context.quadraticCurveTo(-16, 0, -20, -3.5);
+      context.closePath();
+      context.fill();
+      context.stroke();
+    } else if (variant === 2) {
+      context.fillStyle = "rgba(255,255,255,0.18)";
+      context.fillRect(-15, -5, 23, 10);
+      context.fillStyle = "rgba(116,192,252,0.28)";
+      context.beginPath();
+      context.moveTo(-6, -5);
+      context.lineTo(7, -18);
+      context.lineTo(12, -4);
+      context.closePath();
+      context.fill();
+      context.beginPath();
+      context.moveTo(-6, 5);
+      context.lineTo(7, 18);
+      context.lineTo(12, 4);
+      context.closePath();
+      context.fill();
+      context.fillStyle = hull;
+      context.beginPath();
+      context.moveTo(-18, -6);
+      context.lineTo(13, -6);
+      context.lineTo(28, 0);
+      context.lineTo(13, 6);
+      context.lineTo(-18, 6);
+      context.quadraticCurveTo(-23, 0, -18, -6);
+      context.closePath();
+      context.fill();
+      context.stroke();
+    } else {
+      context.fillStyle = "rgba(116,192,252,0.25)";
+      context.beginPath();
+      context.moveTo(-12, -4);
+      context.lineTo(5, -19);
+      context.lineTo(10, -5);
+      context.closePath();
+      context.fill();
+      context.beginPath();
+      context.moveTo(-12, 4);
+      context.lineTo(5, 19);
+      context.lineTo(10, 5);
+      context.closePath();
+      context.fill();
+      context.fillStyle = hull;
+      context.beginPath();
+      context.moveTo(-22, -5);
+      context.quadraticCurveTo(0, -13, 30, 0);
+      context.quadraticCurveTo(0, 13, -22, 5);
+      context.quadraticCurveTo(-16, 0, -22, -5);
+      context.closePath();
+      context.fill();
+      context.stroke();
+    }
+
+    context.fillStyle = "rgba(9,13,26,0.7)";
+    context.beginPath();
+    context.ellipse(10, -1.6, 4.8, 2.5, -0.14, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = "rgba(199,235,255,0.72)";
+    context.beginPath();
+    context.ellipse(11, -2, 2.1, 1, -0.14, 0, Math.PI * 2);
+    context.fill();
   }
 
   function stableHash(value) {
