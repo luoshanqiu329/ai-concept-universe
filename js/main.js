@@ -110,11 +110,14 @@
     labels: new Map(),
     backgroundLinkObject: null,
     highlightLinkObject: null,
+    dataStreamObject: null,
     linkVisibilitySignature: "",
     linkHighlightSignature: "",
+    dataStreamSignature: "",
     portraitCache: new Map(),
     lastLabelUpdate: 0,
     lastPointerCheck: 0,
+    lastDataStreamUpdate: 0,
     lastRender: 0,
     width: window.innerWidth,
     height: window.innerHeight,
@@ -279,10 +282,28 @@
     radarLayer.innerHTML = `
       <div class="radar-pulse"></div>
       <div class="radar-sweep"></div>
+      <div class="radar-ticks"></div>
+      <div class="radar-crosshair"></div>
       <div class="radar-core"></div>
     `;
     document.querySelector(".app-shell")?.appendChild(radarLayer);
     dynamicDom.radarLayer = radarLayer;
+
+    const targetLock = document.createElement("div");
+    targetLock.id = "target-lock";
+    targetLock.className = "target-lock";
+    targetLock.hidden = true;
+    targetLock.setAttribute("aria-hidden", "true");
+    targetLock.innerHTML = `
+      <span class="target-corner top-left"></span>
+      <span class="target-corner top-right"></span>
+      <span class="target-corner bottom-left"></span>
+      <span class="target-corner bottom-right"></span>
+      <span class="target-reticle"></span>
+      <span class="target-readout"><span>FOCUS</span><i></i></span>
+    `;
+    document.querySelector(".app-shell")?.appendChild(targetLock);
+    dynamicDom.targetLock = targetLock;
 
     const orbitalMenu = document.createElement("div");
     orbitalMenu.id = "orbital-menu";
@@ -354,6 +375,7 @@
         <span class="constellation-kicker">CONSTELLATION</span>
         <strong id="constellation-title"></strong>
         <p id="constellation-summary"></p>
+        <div id="constellation-readout" class="constellation-readout"></div>
         <div id="constellation-route" class="constellation-route"></div>
         <div id="constellation-links" class="constellation-links"></div>
       </div>
@@ -363,6 +385,7 @@
     dynamicDom.constellationHud = constellationHud;
     dynamicDom.constellationTitle = constellationHud.querySelector("#constellation-title");
     dynamicDom.constellationSummary = constellationHud.querySelector("#constellation-summary");
+    dynamicDom.constellationReadout = constellationHud.querySelector("#constellation-readout");
     dynamicDom.constellationRoute = constellationHud.querySelector("#constellation-route");
     dynamicDom.constellationLinks = constellationHud.querySelector("#constellation-links");
     dynamicDom.exitConstellation = constellationHud.querySelector("#exit-constellation");
@@ -462,6 +485,7 @@
     if (!syncScene) return;
     if (state.renderer && state.camera) handleResize();
     window.dispatchEvent(new Event("resize"));
+    if (state.items.length) applyFilters();
   }
 
   function updatePerformanceButton() {
@@ -597,8 +621,10 @@
     state.labels.clear();
     state.backgroundLinkObject = null;
     state.highlightLinkObject = null;
+    state.dataStreamObject = null;
     state.linkVisibilitySignature = "";
     state.linkHighlightSignature = "";
+    state.dataStreamSignature = "";
     addGalaxyMist();
     addItemMeshes();
   }
@@ -706,6 +732,14 @@
       state.linkHighlightSignature = highlightSignature;
     }
 
+    const streamSignature = `${highlightSignature}:${state.lowPerformance ? "low" : "full"}`;
+    if (streamSignature !== state.dataStreamSignature) {
+      disposeSceneObject(state.dataStreamObject);
+      state.dataStreamObject = state.lowPerformance ? null : createDataStreamLayer(highlightedLinks, constellationIds.size);
+      if (state.dataStreamObject) state.galaxy.add(state.dataStreamObject);
+      state.dataStreamSignature = streamSignature;
+    }
+
     if (state.backgroundLinkObject) {
       state.backgroundLinkObject.visible = visibleLinks.length > 0;
       state.backgroundLinkObject.material.opacity = focusRelated.size ? 0.018 : 0.12;
@@ -713,6 +747,10 @@
     if (state.highlightLinkObject) {
       state.highlightLinkObject.visible = highlightedLinks.length > 0;
       state.highlightLinkObject.material.opacity = constellationIds.size ? 0.78 : 0.62;
+    }
+    if (state.dataStreamObject) {
+      state.dataStreamObject.visible = highlightedLinks.length > 0 && !state.lowPerformance;
+      state.dataStreamObject.material.opacity = constellationIds.size ? 0.86 : 0.68;
     }
   }
 
@@ -722,12 +760,7 @@
     const colors = [];
     const color = new THREE.Color();
     links.forEach((link) => {
-      const start = new THREE.Vector3(link.source.position.x, link.source.position.y, link.source.position.z);
-      const end = new THREE.Vector3(link.target.position.x, link.target.position.y, link.target.position.z);
-      const mid = start.clone().add(end).multiplyScalar(0.5);
-      mid.multiplyScalar(0.76);
-      mid.y += 18 + (stableHash(link.id) % 26);
-      const curve = new THREE.CatmullRomCurve3([start, mid, end]);
+      const curve = linkCurve(link);
       const points = curve.getPoints(14);
       color.setHex(relationColor(link));
       for (let index = 0; index < points.length - 1; index += 1) {
@@ -751,6 +784,59 @@
     layer.renderOrder = renderOrder;
     layer.userData.linkLayer = true;
     return layer;
+  }
+
+  function createDataStreamLayer(links, constellationSize = 0) {
+    if (!links.length) return null;
+    const packetsPerLink = constellationSize ? 2 : 1;
+    const packetCount = links.length * packetsPerLink;
+    const positions = new Float32Array(packetCount * 3);
+    const colors = new Float32Array(packetCount * 3);
+    const packets = [];
+    const color = new THREE.Color();
+    let packetIndex = 0;
+    links.forEach((link) => {
+      const curve = linkCurve(link);
+      color.setHex(relationColor(link));
+      for (let index = 0; index < packetsPerLink; index += 1) {
+        const phase = ((stableHash(`${link.id}-packet-${index}`) % 1000) / 1000 + index * 0.47) % 1;
+        packets.push({
+          curve,
+          phase,
+          speed: 0.00007 + ((stableHash(`${link.id}-speed`) % 34) / 1000000),
+        });
+        colors[packetIndex * 3] = color.r;
+        colors[packetIndex * 3 + 1] = color.g;
+        colors[packetIndex * 3 + 2] = color.b;
+        packetIndex += 1;
+      }
+    });
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    const material = new THREE.PointsMaterial({
+      size: constellationSize ? 4.2 : 3.4,
+      transparent: true,
+      opacity: constellationSize ? 0.86 : 0.68,
+      vertexColors: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const points = new THREE.Points(geometry, material);
+    points.renderOrder = 4;
+    points.userData.dataStream = true;
+    points.userData.packets = packets;
+    return points;
+  }
+
+  function linkCurve(link) {
+    const start = new THREE.Vector3(link.source.position.x, link.source.position.y, link.source.position.z);
+    const end = new THREE.Vector3(link.target.position.x, link.target.position.y, link.target.position.z);
+    const mid = start.clone().add(end).multiplyScalar(0.5);
+    mid.multiplyScalar(0.76);
+    mid.y += 18 + (stableHash(link.id) % 26);
+    return new THREE.CatmullRomCurve3([start, mid, end]);
   }
 
   function disposeSceneObject(object) {
@@ -824,6 +910,34 @@
     ring.rotation.z = -0.32;
     ring.userData.coreRing = true;
     state.galaxy.add(ring);
+
+    addTacticalSectorRings();
+  }
+
+  function addTacticalSectorRings() {
+    const rings = [
+      { radius: 170, color: 0x8cb7ff, opacity: 0.026, x: Math.PI / 2.78, z: -0.58 },
+      { radius: 248, color: 0x79dfc1, opacity: 0.021, x: Math.PI / 2.68, z: 0.42 },
+      { radius: 328, color: 0xff8fa3, opacity: 0.018, x: Math.PI / 2.58, z: -1.04 },
+    ];
+    rings.forEach((config, index) => {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(config.radius, config.radius + 0.9, 192),
+        new THREE.MeshBasicMaterial({
+          color: config.color,
+          transparent: true,
+          opacity: config.opacity,
+          side: THREE.DoubleSide,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+        })
+      );
+      ring.rotation.x = config.x;
+      ring.rotation.z = config.z;
+      ring.userData.tacticalRing = true;
+      ring.userData.spin = index % 2 ? -0.00008 : 0.00006;
+      state.galaxy.add(ring);
+    });
   }
 
   function createLabel(item) {
@@ -1084,6 +1198,11 @@
     dynamicDom.exitConstellation.textContent = "退出聚焦";
     dynamicDom.constellationTitle.textContent = `${root.name} 星座`;
     dynamicDom.constellationSummary.textContent = story.summary;
+    if (dynamicDom.constellationReadout) {
+      dynamicDom.constellationReadout.innerHTML = story.readout
+        .map((entry) => `<span><strong>${escapeHtml(entry.value)}</strong><em>${escapeHtml(entry.label)}</em></span>`)
+        .join("");
+    }
     dynamicDom.constellationRoute.innerHTML = story.route.map((name) => `<span>${escapeHtml(name)}</span>`).join("");
     dynamicDom.constellationLinks.innerHTML = story.links
       .map((item) => `<button class="constellation-chip" type="button" data-target="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button>`)
@@ -1114,7 +1233,15 @@
     const anchor = achievements[0]?.name || people[0]?.name || concepts[0]?.name || "相关概念";
     const base = root.definition || root.role || root.impact || "该节点是 AI 知识图谱中的关键档案。";
     const summary = `${base} 当前保留 ${Math.max(0, constellationIds.size - 1)} 个强关联节点，优先呈现 ${anchor} 与它的演化路径。`;
-    return { route, links, summary };
+    const localLinks = state.links.filter((link) => constellationIds.has(link.sourceId) && constellationIds.has(link.targetId));
+    const years = [root, ...members].map((item) => Number(item.year)).filter(Boolean);
+    const readout = [
+      { label: "节点", value: String(constellationIds.size || 1) },
+      { label: "链路", value: String(localLinks.length) },
+      { label: "首年", value: String(Math.min(...years, Number(root.year) || CURRENT_YEAR)) },
+      { label: "热度", value: String(Math.round(root.heat || 0)) },
+    ];
+    return { route, links, summary, readout };
   }
 
   function handleConstellationClick(event) {
@@ -1621,28 +1748,74 @@
     };
   }
 
+  function screenSizeForItem(item) {
+    const mesh = state.meshes.get(item?.id);
+    if (!mesh || !state.camera) return 64;
+    const distance = Math.max(1, state.camera.position.distanceTo(mesh.position));
+    const fov = THREE.MathUtils.degToRad(state.camera.fov || 45);
+    const visibleHeight = 2 * Math.tan(fov / 2) * distance;
+    const pixelsPerUnit = state.height / Math.max(1, visibleHeight);
+    return clampNumber(mesh.scale.x * pixelsPerUnit * 1.72, 46, 156);
+  }
+
   function updateInteractionOverlays() {
-    const item = state.itemById.get(state.selectedId || state.constellationId);
-    const shouldShow = item && !dom.infoCard.hidden;
-    const point = shouldShow ? screenPointForItem(item) : null;
-    const visible = Boolean(point);
+    const actionItem = state.itemById.get(state.selectedId || state.constellationId);
+    const shouldShowAction = actionItem && !dom.infoCard.hidden;
+    const actionPoint = shouldShowAction ? screenPointForItem(actionItem) : null;
+    const actionVisible = Boolean(actionPoint) && !isPointOccludedByUi(actionPoint);
+    const targetItem = state.itemById.get(state.selectedId || state.constellationId || state.searchHitId || state.hoveredId);
+    const targetPoint = targetItem ? screenPointForItem(targetItem) : null;
+    const targetVisible = Boolean(targetPoint) && !isPointOccludedByUi(targetPoint);
+    if (dynamicDom.targetLock) {
+      dynamicDom.targetLock.hidden = !targetVisible;
+      if (targetVisible) {
+        const size = screenSizeForItem(targetItem);
+        dynamicDom.targetLock.style.width = `${size}px`;
+        dynamicDom.targetLock.style.height = `${size}px`;
+        dynamicDom.targetLock.style.left = `${targetPoint.x}px`;
+        dynamicDom.targetLock.style.top = `${targetPoint.y}px`;
+        dynamicDom.targetLock.style.setProperty("--target-color", itemColor(targetItem).getStyle());
+        dynamicDom.targetLock.classList.toggle("is-acquired", targetItem.id === state.selectedId || targetItem.id === state.constellationId || targetItem.id === state.searchHitId);
+      }
+    }
     if (dynamicDom.radarLayer) {
-      dynamicDom.radarLayer.hidden = !visible || !state.radar;
-      if (visible && state.radar) {
+      dynamicDom.radarLayer.hidden = !actionVisible || !state.radar;
+      if (actionVisible && state.radar) {
         const size = clampNumber(210 + state.radar.ids.length * 10, 210, 390);
         dynamicDom.radarLayer.style.width = `${size}px`;
         dynamicDom.radarLayer.style.height = `${size}px`;
-        dynamicDom.radarLayer.style.left = `${point.x}px`;
-        dynamicDom.radarLayer.style.top = `${point.y}px`;
+        dynamicDom.radarLayer.style.left = `${actionPoint.x}px`;
+        dynamicDom.radarLayer.style.top = `${actionPoint.y}px`;
       }
     }
     if (dynamicDom.orbitalMenu) {
-      dynamicDom.orbitalMenu.hidden = !visible;
-      if (visible) {
-        dynamicDom.orbitalMenu.style.left = `${point.x}px`;
-        dynamicDom.orbitalMenu.style.top = `${point.y}px`;
+      dynamicDom.orbitalMenu.hidden = !actionVisible;
+      if (actionVisible) {
+        dynamicDom.orbitalMenu.style.left = `${actionPoint.x}px`;
+        dynamicDom.orbitalMenu.style.top = `${actionPoint.y}px`;
       }
     }
+  }
+
+  function isPointOccludedByUi(point) {
+    if (!point) return false;
+    const overlays = [
+      document.querySelector(".filter-panel"),
+      document.querySelector(".top-tools"),
+      dom.infoCard,
+      document.querySelector(".chronicle-bar"),
+      dynamicDom.constellationHud,
+    ].filter(Boolean);
+    return overlays.some((element) => {
+      const style = window.getComputedStyle(element);
+      if (element.hidden || style.display === "none" || style.visibility === "hidden" || Number(style.opacity) === 0) return false;
+      const rect = element.getBoundingClientRect();
+      const padding = 8;
+      return point.x >= rect.left - padding
+        && point.x <= rect.right + padding
+        && point.y >= rect.top - padding
+        && point.y <= rect.bottom + padding;
+    });
   }
 
   function updateRadarReveal() {
@@ -1895,17 +2068,38 @@
       if (child.userData?.coreRing) {
         if (!state.lowPerformance) child.rotation.z += 0.00035;
       }
+      if (child.userData?.tacticalRing) {
+        if (!state.lowPerformance) child.rotation.z += child.userData.spin || 0;
+      }
       if (child.userData?.mist) {
         if (!state.lowPerformance) child.rotation.y += 0.00012;
       }
     });
     if (!state.lowPerformance) updateRadarReveal();
+    if (!state.lowPerformance) updateDataStreams(now);
     if (now - state.lastLabelUpdate > currentLabelInterval()) {
       state.lastLabelUpdate = now;
       updateLabels();
       updateInteractionOverlays();
     }
     state.renderer.render(state.scene, state.camera);
+  }
+
+  function updateDataStreams(now) {
+    const object = state.dataStreamObject;
+    if (!object?.visible || !object.userData?.packets?.length) return;
+    if (now - state.lastDataStreamUpdate < 32) return;
+    state.lastDataStreamUpdate = now;
+    const positions = object.geometry.attributes.position.array;
+    const point = updateDataStreams.point || (updateDataStreams.point = new THREE.Vector3());
+    object.userData.packets.forEach((packet, index) => {
+      const t = (packet.phase + now * packet.speed) % 1;
+      packet.curve.getPoint(t, point);
+      positions[index * 3] = point.x;
+      positions[index * 3 + 1] = point.y;
+      positions[index * 3 + 2] = point.z;
+    });
+    object.geometry.attributes.position.needsUpdate = true;
   }
 
   function itemColor(item) {
@@ -2461,6 +2655,36 @@
     context.beginPath();
     context.ellipse(11, -2, 2.1, 1, -0.14, 0, Math.PI * 2);
     context.fill();
+
+    context.save();
+    context.shadowBlur = 0;
+    context.strokeStyle = "rgba(238,243,255,0.34)";
+    context.lineWidth = 0.75;
+    context.beginPath();
+    context.moveTo(-16, 0);
+    context.lineTo(27, 0);
+    context.moveTo(-5, -4.8);
+    context.lineTo(12, -2.2);
+    context.moveTo(-5, 4.8);
+    context.lineTo(12, 2.2);
+    context.stroke();
+    context.strokeStyle = "rgba(121,223,193,0.42)";
+    context.beginPath();
+    context.moveTo(2, -12);
+    context.lineTo(18, -2.8);
+    context.moveTo(2, 12);
+    context.lineTo(18, 2.8);
+    context.stroke();
+    context.fillStyle = `rgba(121,223,193,${0.45 + flamePulse * 0.28})`;
+    context.beginPath();
+    context.arc(-14, -3.8, 1.15, 0, Math.PI * 2);
+    context.arc(-14, 3.8, 1.15, 0, Math.PI * 2);
+    context.fill();
+    context.fillStyle = `rgba(255,224,102,${0.32 + flamePulse * 0.18})`;
+    context.beginPath();
+    context.arc(24, 0, 1.05, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
   }
 
   function stableHash(value) {
