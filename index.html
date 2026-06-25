@@ -83,6 +83,13 @@
         <button id="reset-view" class="icon-button" type="button" title="复位" aria-label="复位">
           <i data-lucide="rotate-ccw" aria-hidden="true"></i>
         </button>
+        <button id="skill-submit-btn" class="icon-button" type="button" title="提交Skill" aria-label="提交Skill">
+          <i data-lucide="upload" aria-hidden="true"></i>
+        </button>
+        <button id="skill-history-btn" class="icon-button" type="button" title="提交记录" aria-label="提交记录" hidden>
+          <i data-lucide="list-checks" aria-hidden="true"></i>
+          <span id="skill-history-count" class="skill-badge-count"></span>
+        </button>
         <button id="update-badge" class="update-badge" type="button" hidden>
           <i data-lucide="sparkles" aria-hidden="true"></i>
           <span>有新内容</span>
@@ -118,6 +125,85 @@
         <div class="card-block">
           <div class="section-title">资料链接</div>
           <div id="card-links" class="reference-links"></div>
+        </div>
+      </aside>
+
+      <aside id="skill-submit-modal" class="skill-modal" hidden aria-label="Skill提交表单">
+        <button id="skill-submit-close" class="close-button" type="button" title="关闭" aria-label="关闭">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+        <div class="skill-modal-header">
+          <p class="eyebrow">CONTRIBUTE</p>
+          <h2>Skill 提交</h2>
+          <p class="subtle">提交你的 Skill 到 AI 技能宇宙</p>
+        </div>
+        <form id="skill-submit-form" novalidate>
+          <div class="skill-field">
+            <label for="skill-name">姓名</label>
+            <input id="skill-name" type="text" required placeholder="你的姓名" autocomplete="name" />
+          </div>
+          <div class="skill-field">
+            <label for="skill-dept">部门</label>
+            <input id="skill-dept" type="text" required placeholder="所属部门" />
+          </div>
+          <div class="skill-field">
+            <label for="skill-purpose">Skill 作用</label>
+            <textarea id="skill-purpose" required placeholder="描述这个 Skill 的功能和目标" rows="3"></textarea>
+          </div>
+          <div class="skill-field">
+            <label for="skill-scenarios">适用场景</label>
+            <textarea id="skill-scenarios" required placeholder="这个 Skill 适用于哪些工作场景" rows="3"></textarea>
+          </div>
+          <div class="skill-field">
+            <label>Skill 文件上传</label>
+            <div class="skill-upload-area">
+              <input id="skill-file-input" type="file" hidden />
+              <button type="button" class="skill-upload-btn" id="skill-file-upload-btn">
+                <i data-lucide="file-up" aria-hidden="true"></i>
+                <span>选择文件</span>
+              </button>
+              <span id="skill-file-name" class="skill-file-name"></span>
+            </div>
+          </div>
+          <div class="skill-field">
+            <label>使用手册上传</label>
+            <div class="skill-upload-area">
+              <input id="manual-file-input" type="file" hidden />
+              <button type="button" class="skill-upload-btn" id="manual-file-upload-btn">
+                <i data-lucide="book-up" aria-hidden="true"></i>
+                <span>选择文件</span>
+              </button>
+              <span id="manual-file-name" class="skill-file-name"></span>
+            </div>
+          </div>
+          <div class="skill-submit-actions">
+            <button type="button" id="skill-cancel-btn" class="ghost-button">取消</button>
+            <button type="submit" id="skill-submit-confirm" class="skill-submit-primary">
+              <i data-lucide="send" aria-hidden="true"></i>
+              <span>提交 Skill</span>
+            </button>
+          </div>
+        </form>
+        <div id="skill-submit-success" class="skill-submit-success" hidden>
+          <i data-lucide="check-circle" aria-hidden="true"></i>
+          <strong>提交成功</strong>
+          <p>你的 Skill 已保存到本地记录中。</p>
+          <button type="button" id="skill-submit-another" class="ghost-button">继续提交</button>
+        </div>
+      </aside>
+
+      <aside id="skill-history-modal" class="skill-modal" hidden aria-label="提交记录">
+        <button id="skill-history-close" class="close-button" type="button" title="关闭" aria-label="关闭">
+          <i data-lucide="x" aria-hidden="true"></i>
+        </button>
+        <div class="skill-modal-header">
+          <h2>提交记录</h2>
+          <p class="subtle" id="skill-history-total"></p>
+        </div>
+        <div id="skill-history-list" class="skill-history-list"></div>
+        <div id="skill-history-empty" class="skill-history-empty" hidden>
+          <i data-lucide="inbox" aria-hidden="true"></i>
+          <p>暂无提交记录</p>
         </div>
       </aside>
 

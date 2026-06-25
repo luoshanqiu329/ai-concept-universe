@@ -23,6 +23,11 @@
 
   const STORAGE_KEY = "ai-concept-universe:last-seen-version";
   const LOW_PERFORMANCE_KEY = "ai-concept-universe:low-performance";
+  const SUBMISSIONS_KEY = "ai-concept-universe:skill-submissions";
+  const DB_NAME = "ai-concept-universe-db";
+  const DB_VERSION = 1;
+  const FILE_STORE = "skill-files";
+  const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const MOTION_QUERY = window.matchMedia?.("(prefers-reduced-motion: reduce)") || null;
   const CURRENT_YEAR = 2026;
   const EPOCH_YEAR = 1950;
@@ -75,6 +80,31 @@
     cardPeople: document.getElementById("card-people"),
     cardRelations: document.getElementById("card-relations"),
     cardLinks: document.getElementById("card-links"),
+    skillSubmitBtn: document.getElementById("skill-submit-btn"),
+    skillHistoryBtn: document.getElementById("skill-history-btn"),
+    skillHistoryCount: document.getElementById("skill-history-count"),
+    skillSubmitModal: document.getElementById("skill-submit-modal"),
+    skillSubmitClose: document.getElementById("skill-submit-close"),
+    skillSubmitForm: document.getElementById("skill-submit-form"),
+    skillName: document.getElementById("skill-name"),
+    skillDept: document.getElementById("skill-dept"),
+    skillPurpose: document.getElementById("skill-purpose"),
+    skillScenarios: document.getElementById("skill-scenarios"),
+    skillFileInput: document.getElementById("skill-file-input"),
+    skillFileName: document.getElementById("skill-file-name"),
+    skillFileUploadBtn: document.getElementById("skill-file-upload-btn"),
+    manualFileInput: document.getElementById("manual-file-input"),
+    manualFileName: document.getElementById("manual-file-name"),
+    manualFileUploadBtn: document.getElementById("manual-file-upload-btn"),
+    skillCancelBtn: document.getElementById("skill-cancel-btn"),
+    skillSubmitConfirm: document.getElementById("skill-submit-confirm"),
+    skillSubmitSuccess: document.getElementById("skill-submit-success"),
+    skillSubmitAnother: document.getElementById("skill-submit-another"),
+    skillHistoryModal: document.getElementById("skill-history-modal"),
+    skillHistoryClose: document.getElementById("skill-history-close"),
+    skillHistoryList: document.getElementById("skill-history-list"),
+    skillHistoryTotal: document.getElementById("skill-history-total"),
+    skillHistoryEmpty: document.getElementById("skill-history-empty"),
   };
 
   const dynamicDom = {};
@@ -143,6 +173,7 @@
     updateTimelineRange();
     applyFilters();
     setupUpdateBadge();
+    updateHistoryBadge();
     animate();
   }
 
@@ -271,6 +302,40 @@
     dom.search.addEventListener("input", debounce(handleSearchInput, 160));
     dom.search.addEventListener("keydown", (event) => {
       if (event.key === "Enter") handleSearchInput();
+    });
+
+    // Skill submission
+    dom.skillSubmitBtn.addEventListener("click", openSkillSubmitModal);
+    dom.skillSubmitClose.addEventListener("click", closeSkillSubmitModal);
+    dom.skillCancelBtn.addEventListener("click", closeSkillSubmitModal);
+    dom.skillSubmitModal.addEventListener("click", (event) => {
+      if (event.target === dom.skillSubmitModal) closeSkillSubmitModal();
+    });
+    dom.skillSubmitForm.addEventListener("submit", handleSkillSubmit);
+    dom.skillFileUploadBtn.addEventListener("click", () => dom.skillFileInput.click());
+    dom.manualFileUploadBtn.addEventListener("click", () => dom.manualFileInput.click());
+    dom.skillFileInput.addEventListener("change", () => handleFileSelect(dom.skillFileInput, dom.skillFileName));
+    dom.manualFileInput.addEventListener("change", () => handleFileSelect(dom.manualFileInput, dom.manualFileName));
+    dom.skillSubmitAnother.addEventListener("click", () => {
+      dom.skillSubmitSuccess.hidden = true;
+      dom.skillSubmitForm.hidden = false;
+      dom.skillSubmitForm.reset();
+      dom.skillFileName.textContent = "";
+      dom.manualFileName.textContent = "";
+      dom.skillFileInput.value = "";
+      dom.manualFileInput.value = "";
+    });
+    dom.skillHistoryBtn.addEventListener("click", openSkillHistoryModal);
+    dom.skillHistoryClose.addEventListener("click", closeSkillHistoryModal);
+    dom.skillHistoryModal.addEventListener("click", (event) => {
+      if (event.target === dom.skillHistoryModal) closeSkillHistoryModal();
+    });
+    dom.skillHistoryList.addEventListener("click", handleHistoryDownload);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        if (!dom.skillSubmitModal.hidden) closeSkillSubmitModal();
+        if (!dom.skillHistoryModal.hidden) closeSkillHistoryModal();
+      }
     });
   }
 
@@ -2214,6 +2279,247 @@
       // Storage can be unavailable in strict privacy modes.
     }
   }
+
+  /* ===== Skill Submission ===== */
+
+  function openSkillDb() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains(FILE_STORE)) {
+          db.createObjectStore(FILE_STORE, { keyPath: "id" });
+        }
+      };
+      request.onsuccess = (event) => resolve(event.target.result);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  }
+
+  async function storeFile(id, file) {
+    const db = await openSkillDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(FILE_STORE, "readwrite");
+      const store = transaction.objectStore(FILE_STORE);
+      store.put({ id, name: file.name, type: file.type, size: file.size, blob: file, storedAt: Date.now() });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = (event) => reject(event.target.error);
+    });
+  }
+
+  async function getFile(id) {
+    const db = await openSkillDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(FILE_STORE, "readonly");
+      const store = transaction.objectStore(FILE_STORE);
+      const request = store.get(id);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = (event) => reject(event.target.error);
+    });
+  }
+
+  function loadSubmissions() {
+    try {
+      const raw = localStorage.getItem(SUBMISSIONS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function saveSubmissions(submissions) {
+    try {
+      localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions));
+    } catch (error) {
+      // Storage full or unavailable
+    }
+  }
+
+  function addSubmission(submission) {
+    const submissions = loadSubmissions();
+    submissions.unshift(submission);
+    saveSubmissions(submissions);
+    updateHistoryBadge();
+  }
+
+  function updateHistoryBadge() {
+    const submissions = loadSubmissions();
+    const count = submissions.length;
+    if (dom.skillHistoryBtn) {
+      dom.skillHistoryBtn.hidden = count === 0;
+    }
+    if (dom.skillHistoryCount) {
+      dom.skillHistoryCount.textContent = String(count);
+    }
+  }
+
+  function openSkillSubmitModal() {
+    if (dom.skillHistoryModal) dom.skillHistoryModal.hidden = true;
+    closeInfoCard();
+    dom.skillSubmitModal.hidden = false;
+    dom.skillSubmitForm.reset();
+    dom.skillSubmitForm.hidden = false;
+    dom.skillSubmitSuccess.hidden = true;
+    dom.skillFileName.textContent = "";
+    dom.manualFileName.textContent = "";
+    dom.skillFileInput.value = "";
+    dom.manualFileInput.value = "";
+    dom.skillSubmitConfirm.disabled = false;
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function closeSkillSubmitModal() {
+    dom.skillSubmitModal.hidden = true;
+  }
+
+  function openSkillHistoryModal() {
+    dom.skillSubmitModal.hidden = true;
+    dom.skillHistoryModal.hidden = false;
+    renderSubmissionHistory();
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  function closeSkillHistoryModal() {
+    dom.skillHistoryModal.hidden = true;
+  }
+
+  function handleFileSelect(inputElement, nameElement) {
+    const file = inputElement.files[0];
+    if (file) {
+      nameElement.textContent = file.name;
+    } else {
+      nameElement.textContent = "";
+    }
+  }
+
+  async function handleSkillSubmit(event) {
+    event.preventDefault();
+
+    const name = dom.skillName.value.trim();
+    const department = dom.skillDept.value.trim();
+    const purpose = dom.skillPurpose.value.trim();
+    const scenarios = dom.skillScenarios.value.trim();
+    const skillFile = dom.skillFileInput.files[0] || null;
+    const manualFile = dom.manualFileInput.files[0] || null;
+
+    if (!name || !department || !purpose || !scenarios) {
+      alert("请填写所有必填字段。");
+      return;
+    }
+
+    if (skillFile && skillFile.size > MAX_FILE_SIZE) {
+      alert("Skill 文件大小不能超过 10MB。");
+      return;
+    }
+    if (manualFile && manualFile.size > MAX_FILE_SIZE) {
+      alert("使用手册文件大小不能超过 10MB。");
+      return;
+    }
+
+    dom.skillSubmitConfirm.disabled = true;
+
+    try {
+      const submissionId = "submission-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+      const skillFileId = skillFile ? submissionId + "-skill" : null;
+      const manualFileId = manualFile ? submissionId + "-manual" : null;
+
+      if (skillFile) await storeFile(skillFileId, skillFile);
+      if (manualFile) await storeFile(manualFileId, manualFile);
+
+      const submission = {
+        id: submissionId,
+        name: name,
+        department: department,
+        purpose: purpose,
+        scenarios: scenarios,
+        skillFile: skillFile ? { id: skillFileId, name: skillFile.name, size: skillFile.size, type: skillFile.type } : null,
+        manualFile: manualFile ? { id: manualFileId, name: manualFile.name, size: manualFile.size, type: manualFile.type } : null,
+        submittedAt: new Date().toISOString(),
+      };
+
+      addSubmission(submission);
+
+      dom.skillSubmitForm.hidden = true;
+      dom.skillSubmitSuccess.hidden = false;
+      if (window.lucide) window.lucide.createIcons();
+    } catch (error) {
+      console.error("Submission failed", error);
+      alert("提交失败，请重试。如果使用了无痕浏览模式，请尝试普通模式。");
+    } finally {
+      dom.skillSubmitConfirm.disabled = false;
+    }
+  }
+
+  function renderSubmissionHistory() {
+    const submissions = loadSubmissions();
+    const total = submissions.length;
+    dom.skillHistoryTotal.textContent = total ? "共 " + total + " 条记录" : "";
+    dom.skillHistoryEmpty.hidden = total > 0;
+    dom.skillHistoryList.hidden = total === 0;
+
+    dom.skillHistoryList.innerHTML = submissions
+      .map((sub) => {
+        const date = new Date(sub.submittedAt).toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+        const skillFileBtn = sub.skillFile
+          ? '<button class="skill-history-download-btn" type="button" data-download="' + escapeHtml(sub.skillFile.id) + '" data-filename="' + escapeHtml(sub.skillFile.name) + '"><i data-lucide="download"></i> ' + escapeHtml(sub.skillFile.name) + '</button>'
+          : "";
+        const manualFileBtn = sub.manualFile
+          ? '<button class="skill-history-download-btn" type="button" data-download="' + escapeHtml(sub.manualFile.id) + '" data-filename="' + escapeHtml(sub.manualFile.name) + '"><i data-lucide="download"></i> ' + escapeHtml(sub.manualFile.name) + '</button>'
+          : "";
+
+        return (
+          '<div class="skill-history-item" data-id="' + escapeHtml(sub.id) + '">' +
+          "<strong>" + escapeHtml(sub.name) + "</strong>" +
+          '<p class="subtle" style="margin-top:2px;">' + escapeHtml(sub.purpose.slice(0, 80)) + (sub.purpose.length > 80 ? "..." : "") + "</p>" +
+          '<div class="skill-history-meta">' +
+          "<span>" + escapeHtml(sub.department) + "</span>" +
+          "<span>" + escapeHtml(date) + "</span>" +
+          "</div>" +
+          '<div class="skill-history-files">' +
+          skillFileBtn +
+          manualFileBtn +
+          "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  async function handleHistoryDownload(event) {
+    const button = event.target.closest("[data-download]");
+    if (!button) return;
+    event.stopPropagation();
+    const fileId = button.dataset.download;
+    const fileName = button.dataset.filename || "download";
+    try {
+      const record = await getFile(fileId);
+      if (!record) {
+        alert("文件已过期或不存在。");
+        return;
+      }
+      const url = URL.createObjectURL(record.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = record.name || fileName;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed", error);
+      alert("文件下载失败。");
+    }
+  }
+
+  /* ===== End Skill Submission ===== */
 
   function currentRendererPixelRatio() {
     return Math.min(window.devicePixelRatio || 1, state.lowPerformance ? PERFORMANCE.lowRendererPixelRatio : PERFORMANCE.rendererPixelRatio);

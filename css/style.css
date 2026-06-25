@@ -1764,6 +1764,338 @@ body.is-low-motion .chronicle-focus-card {
   animation: none;
 }
 
+/* ===== Skill Submit & History Modals ===== */
+.skill-modal {
+  position: fixed;
+  z-index: 5;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  right: 24px;
+  top: 92px;
+  width: 420px;
+  max-height: calc(100dvh - 130px);
+  overflow: auto;
+  padding: 20px;
+  border-radius: 18px;
+  border-color: rgba(209, 225, 255, 0.14);
+  background:
+    linear-gradient(145deg, rgba(18, 23, 42, 0.9), rgba(7, 9, 18, 0.78)),
+    radial-gradient(circle at 18% 0%, rgba(140, 183, 255, 0.16), transparent 44%);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(174, 203, 255, 0.28) transparent;
+}
+
+.skill-modal::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13), transparent 28%),
+    linear-gradient(315deg, rgba(121, 223, 193, 0.08), transparent 36%);
+  opacity: 0.8;
+}
+
+.skill-modal[hidden] {
+  display: none;
+}
+
+.skill-modal-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(214, 226, 255, 0.11);
+  margin-bottom: 18px;
+  position: relative;
+}
+
+.skill-modal-header::after {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 68px;
+  height: 1px;
+  content: "";
+  background: linear-gradient(90deg, rgba(121, 223, 193, 0.78), rgba(140, 183, 255, 0));
+  box-shadow: 0 0 18px rgba(121, 223, 193, 0.28);
+}
+
+.skill-modal-header h2 {
+  margin-top: 4px;
+  font-size: 21px;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(140, 183, 255, 0.22);
+}
+
+/* --- Skill Form Fields --- */
+.skill-field {
+  margin-bottom: 14px;
+}
+
+.skill-field label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.skill-field input[type="text"],
+.skill-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(197, 213, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.055);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.018) inset;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  resize: vertical;
+}
+
+.skill-field input[type="text"]:focus,
+.skill-field textarea:focus {
+  outline: none;
+  border-color: rgba(140, 183, 255, 0.46);
+  background: rgba(255, 255, 255, 0.075);
+  box-shadow: 0 0 0 3px rgba(140, 183, 255, 0.11), 0 0 28px rgba(116, 192, 252, 0.15);
+}
+
+.skill-field input[type="text"]::placeholder,
+.skill-field textarea::placeholder {
+  color: rgba(224, 232, 255, 0.44);
+}
+
+/* --- Upload Area --- */
+.skill-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.skill-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(197, 213, 255, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(238, 243, 255, 0.78);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.skill-upload-btn:hover {
+  transform: translateY(-1px);
+  color: #ffffff;
+  border-color: rgba(174, 203, 255, 0.32);
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.skill-upload-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.skill-file-name {
+  overflow: hidden;
+  max-width: 200px;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- Submit Actions --- */
+.skill-submit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(214, 226, 255, 0.11);
+}
+
+.skill-submit-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #8cb7ff, #79dfc1);
+  color: #08111f;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 0 24px rgba(116, 192, 252, 0.28);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.skill-submit-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 36px rgba(116, 192, 252, 0.42);
+}
+
+.skill-submit-primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.skill-submit-primary svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Success State --- */
+.skill-submit-success {
+  text-align: center;
+  padding: 28px 0;
+}
+
+.skill-submit-success[hidden] {
+  display: none;
+}
+
+.skill-submit-success svg {
+  width: 48px;
+  height: 48px;
+  color: var(--accent-2);
+  margin-bottom: 12px;
+}
+
+.skill-submit-success strong {
+  display: block;
+  color: #ffffff;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.skill-submit-success p {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+/* --- History Badge --- */
+.skill-badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent-3);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+}
+
+#skill-history-btn {
+  position: relative;
+}
+
+/* --- History List --- */
+.skill-history-list {
+  display: grid;
+  gap: 8px;
+}
+
+.skill-history-item {
+  padding: 12px;
+  border: 1px solid rgba(197, 213, 255, 0.11);
+  border-radius: 13px;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.022)),
+    radial-gradient(circle at 12% 18%, rgba(140, 183, 255, 0.12), transparent 42%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.012) inset;
+}
+
+.skill-history-item strong {
+  display: block;
+  color: #ffffff;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.skill-history-item .skill-history-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--faint);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.skill-history-item .skill-history-files {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.skill-history-download-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(197, 213, 255, 0.13);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.045);
+  color: rgba(238, 243, 255, 0.72);
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.skill-history-download-btn:hover {
+  color: #ffffff;
+  border-color: rgba(174, 203, 255, 0.32);
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateY(-1px);
+}
+
+.skill-history-download-btn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.skill-history-empty {
+  text-align: center;
+  padding: 36px 0;
+  color: var(--faint);
+}
+
+.skill-history-empty svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  margin-bottom: 8px;
+}
+
+.skill-history-empty[hidden] {
+  display: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1906,6 +2238,15 @@ body.is-low-motion .chronicle-focus-card {
 
   .constellation-links {
     display: none;
+  }
+
+  .skill-modal {
+    left: 24px;
+    right: 24px;
+    top: auto;
+    bottom: 166px;
+    width: auto;
+    max-height: 38vh;
   }
 
 }
