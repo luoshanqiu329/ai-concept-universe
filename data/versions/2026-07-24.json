@@ -1,39 +1,6 @@
 {
-  "meta": {
-    "project": "AI Concept Universe",
-    "currentVersion": "2026-07-24",
-    "generatedAt": "2026-07-24T03:45:56.084Z",
-    "updateCadence": "daily",
-    "sourceMode": "mock-adapter-ready",
-    "changedConcepts": [
-      {
-        "id": "context-layer",
-        "name": "Context Layer",
-        "action": "heat-updated"
-      }
-    ],
-    "nodeCount": 187,
-    "conceptCount": 144,
-    "companyCount": 11,
-    "peopleCount": 16,
-    "achievementCount": 16,
-    "chronologyStart": 1950,
-    "chronologyEnd": 2026,
-    "dataSources": [
-      {
-        "name": "ArXiv Daily AI Papers",
-        "mode": "mock-adapter"
-      },
-      {
-        "name": "Technology Media Signals",
-        "mode": "mock-adapter"
-      },
-      {
-        "name": "Company/Model profiles",
-        "mode": "curated-source-links"
-      }
-    ]
-  },
+  "date": "2026-07-24",
+  "generatedAt": "2026-07-24T03:45:56.084Z",
   "concepts": [
     {
       "id": "foundation-model",
@@ -10664,5 +10631,12 @@
         "agentic-rag"
       ]
     }
-  ]
+  ],
+  "stats": {
+    "nodeCount": 187,
+    "conceptCount": 144,
+    "companyCount": 11,
+    "peopleCount": 16,
+    "achievementCount": 16
+  }
 }
